@@ -1,0 +1,6 @@
+{
+  "name": "ລະບົບຕິດຕາມເອກະສານ (Document Tracking System)",
+  "description": "ລະບົບຕິດຕາມເອກະສານ ແຈ້ງເຕືອນ Real-time, Dashboard ສະຖິຕິ, ຄິດໄລ່ລາຍຮັບ-ລາຍຈ່າຍ ແລະ ອັດຕາແລກປ່ຽນ",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
