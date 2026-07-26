@@ -14,6 +14,7 @@ import { ExchangeRateModal } from './components/ExchangeRateModal';
 import { DashboardOverview } from './components/DashboardOverview';
 import { SoftwareSummaryView } from './components/SoftwareSummaryView';
 import { AnalyticsGraphsView } from './components/AnalyticsGraphsView';
+import { ConsolidatedAllInOneView } from './components/ConsolidatedAllInOneView';
 
 export default function App() {
   // Main State
@@ -47,6 +48,7 @@ export default function App() {
     paymentStatus: 'ALL',
     software: 'ALL',
     renewal2026Only: false,
+    companyType: 'ALL',
     searchQuery: '',
   });
 
@@ -106,7 +108,13 @@ export default function App() {
     // 6. Renewal 2026 filter
     if (filters.renewal2026Only && !doc.softwareInstallation.renew2026) return false;
 
-    // 7. Search query filter across all fields
+    // 7. Company Type filter (New company vs Existing)
+    if (filters.companyType && filters.companyType !== 'ALL') {
+      if (filters.companyType === 'NEW_ONLY' && !doc.isNewCompany) return false;
+      if (filters.companyType === 'EXISTING_ONLY' && doc.isNewCompany) return false;
+    }
+
+    // 8. Search query filter across all fields
     if (filters.searchQuery.trim()) {
       const q = filters.searchQuery.toLowerCase().trim();
       const matchName = doc.companyName.toLowerCase().includes(q);
@@ -374,6 +382,22 @@ export default function App() {
         {/* PAGE 4: ADVANCED GRAPH ANALYTICS */}
         {activeTab === 4 && (
           <AnalyticsGraphsView documents={documents} rates={rates} />
+        )}
+
+        {/* PAGE 5: CONSOLIDATED MASTER TABLE & REVENUE/EXPENSE */}
+        {activeTab === 5 && (
+          <ConsolidatedAllInOneView
+            documents={documents}
+            rates={rates}
+            onViewDetails={(doc) => {
+              setDocForDetail(doc);
+              setIsDetailModalOpen(true);
+            }}
+            onEditDocument={(doc) => {
+              setDocToEdit(doc);
+              setIsFormModalOpen(true);
+            }}
+          />
         )}
 
       </main>

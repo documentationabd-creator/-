@@ -70,10 +70,16 @@ export const DocumentListTable: React.FC<Props> = ({
               const statusBadge = getOperationStatusLabel(doc.operationStatus);
               const paymentBadge = getPaymentStatusLabel(doc.customerPayment.paymentStatus);
 
+              const isUrgent = doc.urgency === 'URGENT';
+
               return (
                 <tr
                   key={doc.id}
-                  className="hover:bg-slate-50/80 dark:hover:bg-slate-700/40 transition group"
+                  className={`transition group ${
+                    isUrgent
+                      ? 'bg-amber-100/90 dark:bg-amber-950/80 hover:bg-amber-200/80 dark:hover:bg-amber-900/90 border-l-4 border-l-amber-500 font-semibold text-slate-900 dark:text-slate-100 ring-1 ring-amber-300 dark:ring-amber-700/80 shadow-xs'
+                      : 'hover:bg-slate-50/80 dark:hover:bg-slate-700/40 text-slate-700 dark:text-slate-200'
+                  }`}
                 >
                   {/* Sequence */}
                   <td className="py-3 px-3 text-center font-bold text-slate-500">

@@ -211,5 +211,6 @@ export interface FilterState {
   paymentStatus: string; // 'ALL' | PaymentStatusType
   software: string; // 'ALL' | 'APIS' | 'TSD' | 'PKT' | 'RENEW_2026' | 'OTHER'
   renewal2026Only: boolean;
+  companyType?: string; // 'ALL' | 'NEW_ONLY' | 'EXISTING_ONLY'
   searchQuery: string;
 }
