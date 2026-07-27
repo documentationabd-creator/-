@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { DollarSign, Clock, Building2, Calendar, AlertTriangle, CheckCircle2, FileCheck, Send, Eye, ShieldCheck, Printer, ArrowUpRight, TrendingUp } from 'lucide-react';
 import { DocumentRecord, ExchangeRates, TimeframeType } from '../types/document';
-import { convertToTotalLAK, formatCurrencyLAK } from '../utils/formatters';
+import { convertToTotalLAK, formatCurrencyLAK, formatCurrencyUSD, formatCurrencyCNY } from '../utils/formatters';
 import { printPDFReport } from '../utils/exportUtils';
 
 interface Props {
@@ -40,16 +40,21 @@ export const DashboardOverview: React.FC<Props> = ({ documents, rates }) => {
 
   const filteredDocs = getFilteredDocuments();
 
-  // Compute 10 Key Metrics required
-  // 1. Total Revenue in LAK
-  const totalRevenueLAK = filteredDocs.reduce(
+  // 1. Total Revenue breakdown by currency
+  const totalRevenueLAK_Sum = filteredDocs.reduce((acc, doc) => acc + (doc.totalValue?.lak || 0), 0);
+  const totalRevenueUSD_Sum = filteredDocs.reduce((acc, doc) => acc + (doc.totalValue?.usd || 0), 0);
+  const totalRevenueCNY_Sum = filteredDocs.reduce((acc, doc) => acc + (doc.totalValue?.cny || 0), 0);
+  const totalRevenueOther_Sum = filteredDocs.reduce((acc, doc) => acc + (doc.totalValue?.otherValue || 0), 0);
+
+  // Grand total converted into LAK
+  const grandTotalRevenueLAK = filteredDocs.reduce(
     (acc, doc) => acc + convertToTotalLAK(doc.totalValue, rates),
     0
   );
 
-  // 2. Total Outstanding Balance in LAK
+  // 2. Total Outstanding Balance converted into LAK
   const totalOutstandingLAK = filteredDocs.reduce(
-    (acc, doc) => acc + convertToTotalLAK(doc.customerPayment.outstandingBalance, rates),
+    (acc, doc) => acc + convertToTotalLAK(doc.customerPayment?.outstandingBalance, rates),
     0
   );
 
@@ -135,32 +140,106 @@ export const DashboardOverview: React.FC<Props> = ({ documents, rates }) => {
       {/* Container to be printed as PDF */}
       <div id="dashboard-pdf-container" className="space-y-6">
         
-        {/* Metric Cards Grid - Top Financials */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          
-          {/* Card 1: Total Value (Revenue) */}
-          <div className="bg-gradient-to-br from-emerald-500 to-teal-700 text-white p-5 rounded-2xl shadow-md space-y-2 relative overflow-hidden">
-            <div className="absolute right-3 top-3 p-3 bg-white/10 rounded-2xl backdrop-blur-xs">
-              <DollarSign className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-xs font-semibold text-emerald-100 uppercase tracking-wide block">
-              1. ມູນຄ່າທັງໝົດ (ລາຍຮັບລວມ)
+        {/* Section 1: Revenue Breakdown Cards (1. LAK, 2. $, 3. Y, 4. Other) */}
+        <div className="space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center space-x-2">
+              <DollarSign className="w-4 h-4 text-emerald-600" />
+              <span>ສະຫຼຸບມູນຄ່າທັງໝົດ (ລາຍຮັບລວມ 4 ສະກຸນເງິນ)</span>
+            </h3>
+            <span className="text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 px-3 py-1.5 rounded-full border border-emerald-200 dark:border-emerald-800 self-start sm:self-auto flex flex-wrap items-center gap-x-2">
+              <span>ລວມມູນຄ່າທັງໝົດ:</span>
+              <span className="text-emerald-800 dark:text-emerald-200 font-extrabold">{formatCurrencyLAK(totalRevenueLAK_Sum)}</span>
+              <span>+</span>
+              <span className="text-blue-800 dark:text-blue-300 font-extrabold">{formatCurrencyUSD(totalRevenueUSD_Sum)}</span>
+              <span>+</span>
+              <span className="text-rose-800 dark:text-rose-300 font-extrabold">{formatCurrencyCNY(totalRevenueCNY_Sum)}</span>
+              {totalRevenueOther_Sum > 0 && (
+                <>
+                  <span>+</span>
+                  <span className="text-purple-800 dark:text-purple-300 font-extrabold">{totalRevenueOther_Sum.toLocaleString()} (ອື່ນໆ)</span>
+                </>
+              )}
             </span>
-            <div className="text-2xl font-black tracking-tight">
-              {formatCurrencyLAK(totalRevenueLAK)}
-            </div>
-            <p className="text-[11px] text-emerald-100 opacity-90 pt-1">
-              ຄິດໄລ່ລວມ USD, LAK, CNY ຕາມອັດຕາແລກປ່ຽນ
-            </p>
           </div>
 
-          {/* Card 2: Total Outstanding Balance */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* 1. LAK */}
+            <div className="bg-gradient-to-br from-emerald-600 to-teal-700 text-white p-5 rounded-2xl shadow-md space-y-2 relative overflow-hidden">
+              <div className="absolute right-3 top-3 p-2 bg-white/10 rounded-xl backdrop-blur-xs font-black text-xs">
+                LAK
+              </div>
+              <span className="text-xs font-semibold text-emerald-100 uppercase tracking-wide block">
+                1. ມູນຄ່າທັງໝົດ (ລາຍຮັບລວມ) LAK
+              </span>
+              <div className="text-2xl font-black tracking-tight">
+                {formatCurrencyLAK(totalRevenueLAK_Sum)}
+              </div>
+              <p className="text-[11px] text-emerald-100/90 pt-1">
+                ລາຍຮັບສະກຸນເງິນກີບ (LAK)
+              </p>
+            </div>
+
+            {/* 2. USD ($) */}
+            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 text-white p-5 rounded-2xl shadow-md space-y-2 relative overflow-hidden">
+              <div className="absolute right-3 top-3 p-2 bg-white/10 rounded-xl backdrop-blur-xs font-black text-xs">
+                USD ($)
+              </div>
+              <span className="text-xs font-semibold text-blue-100 uppercase tracking-wide block">
+                2. ມູນຄ່າທັງໝົດ (ລາຍຮັບລວມ) $
+              </span>
+              <div className="text-2xl font-black tracking-tight">
+                {formatCurrencyUSD(totalRevenueUSD_Sum)}
+              </div>
+              <p className="text-[11px] text-blue-100/90 pt-1">
+                ລາຍຮັບສະກຸນເງິນໂດລາ ($)
+              </p>
+            </div>
+
+            {/* 3. CNY (Y) */}
+            <div className="bg-gradient-to-br from-red-600 to-rose-700 text-white p-5 rounded-2xl shadow-md space-y-2 relative overflow-hidden">
+              <div className="absolute right-3 top-3 p-2 bg-white/10 rounded-xl backdrop-blur-xs font-black text-xs">
+                CNY (¥)
+              </div>
+              <span className="text-xs font-semibold text-red-100 uppercase tracking-wide block">
+                3. ມູນຄ່າທັງໝົດ (ລາຍຮັບລວມ) Y
+              </span>
+              <div className="text-2xl font-black tracking-tight">
+                {formatCurrencyCNY(totalRevenueCNY_Sum)}
+              </div>
+              <p className="text-[11px] text-red-100/90 pt-1">
+                ລາຍຮັບສະກຸນເງິນຢວນ (CNY)
+              </p>
+            </div>
+
+            {/* 4. Other */}
+            <div className="bg-gradient-to-br from-purple-600 to-violet-800 text-white p-5 rounded-2xl shadow-md space-y-2 relative overflow-hidden">
+              <div className="absolute right-3 top-3 p-2 bg-white/10 rounded-xl backdrop-blur-xs font-black text-xs">
+                OTHER
+              </div>
+              <span className="text-xs font-semibold text-purple-100 uppercase tracking-wide block">
+                4. ມູນຄ່າທັງໝົດ (ລາຍຮັບລວມ) ອື່ນໆ
+              </span>
+              <div className="text-2xl font-black tracking-tight">
+                {totalRevenueOther_Sum > 0 ? totalRevenueOther_Sum.toLocaleString() : '0'}
+              </div>
+              <p className="text-[11px] text-purple-100/90 pt-1">
+                ລາຍຮັບສະກຸນເງິນອື່ນໆ
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Section 2: Outstanding Balance & Company Activity Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          
+          {/* Outstanding Balance */}
           <div className="bg-gradient-to-br from-amber-500 to-orange-700 text-white p-5 rounded-2xl shadow-md space-y-2 relative overflow-hidden">
             <div className="absolute right-3 top-3 p-3 bg-white/10 rounded-2xl backdrop-blur-xs">
               <Clock className="w-6 h-6 text-white" />
             </div>
             <span className="text-xs font-semibold text-amber-100 uppercase tracking-wide block">
-              2. ຍອດຄ້າງຊຳລະ (Outstanding)
+              ຍອດຄ້າງຊຳລະ (Outstanding)
             </span>
             <div className="text-2xl font-black tracking-tight">
               {formatCurrencyLAK(totalOutstandingLAK)}
@@ -170,11 +249,11 @@ export const DashboardOverview: React.FC<Props> = ({ documents, rates }) => {
             </p>
           </div>
 
-          {/* Card 3: Total Opened Companies */}
+          {/* Total Opened Companies */}
           <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                3. ບໍລິສັດເປີດວຽກທັງໝົດ
+                ບໍລິສັດເປີດວຽກທັງໝົດ
               </span>
               <div className="p-2 bg-blue-100 text-blue-600 dark:bg-blue-950/60 dark:text-blue-300 rounded-xl">
                 <Building2 className="w-5 h-5" />
@@ -188,11 +267,11 @@ export const DashboardOverview: React.FC<Props> = ({ documents, rates }) => {
             </p>
           </div>
 
-          {/* Card 4: Opened Companies in Current Month */}
+          {/* Opened Companies in Current Month */}
           <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                4. ເປີດວຽກໃນເດືອນນີ້
+                ເປີດວຽກໃນເດືອນນີ້
               </span>
               <div className="p-2 bg-indigo-100 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-300 rounded-xl">
                 <Calendar className="w-5 h-5" />
@@ -208,7 +287,7 @@ export const DashboardOverview: React.FC<Props> = ({ documents, rates }) => {
 
         </div>
 
-        {/* Card 5: Urgent Tasks Detailed Breakdown */}
+        {/* Urgent Tasks Detailed Breakdown */}
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
             <div className="flex items-center space-x-2">
@@ -217,7 +296,7 @@ export const DashboardOverview: React.FC<Props> = ({ documents, rates }) => {
               </div>
               <div>
                 <h3 className="font-bold text-slate-800 dark:text-slate-100 text-base">
-                  5. ສະຖິຕິໜ້າວຽກດ່ວນ (Urgent Tasks)
+                  ສະຖິຕິໜ້າວຽກດ່ວນ (Urgent Tasks)
                 </h3>
                 <p className="text-xs text-slate-400">
                   ສະແດງຈຳນວນວຽກດ່ວນທັງໝົດ, ວຽກດ່ວນທີ່ຍັງຄ້າງ ແລະ ວຽກດ່ວນທີ່ດຳເນີນສຳເລັດ
@@ -268,10 +347,10 @@ export const DashboardOverview: React.FC<Props> = ({ documents, rates }) => {
           </div>
         </div>
 
-        {/* Metrics 6-10 Progress Badges Grid */}
+        {/* Workflow Progress Badges Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
           
-          {/* 6. Total Stamped */}
+          {/* Total Stamped */}
           <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm text-center space-y-1">
             <div className="p-2.5 bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 rounded-xl w-10 h-10 mx-auto flex items-center justify-center">
               <FileCheck className="w-5 h-5" />
@@ -280,11 +359,11 @@ export const DashboardOverview: React.FC<Props> = ({ documents, rates }) => {
               {totalStamped}
             </div>
             <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 block">
-              6. ຈ້ຳກາແລ້ວທັງໝົດ
+              ຈ້ຳກາແລ້ວທັງໝົດ
             </span>
           </div>
 
-          {/* 7. Total Assembled */}
+          {/* Total Assembled */}
           <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm text-center space-y-1">
             <div className="p-2.5 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 rounded-xl w-10 h-10 mx-auto flex items-center justify-center">
               <Building2 className="w-5 h-5" />
@@ -293,11 +372,11 @@ export const DashboardOverview: React.FC<Props> = ({ documents, rates }) => {
               {totalAssembled}
             </div>
             <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 block">
-              7. ປະກອບແລ້ວທັງໝົດ
+              ປະກອບແລ້ວທັງໝົດ
             </span>
           </div>
 
-          {/* 8. Total Submitted */}
+          {/* Total Submitted */}
           <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm text-center space-y-1">
             <div className="p-2.5 bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 rounded-xl w-10 h-10 mx-auto flex items-center justify-center">
               <Send className="w-5 h-5" />
@@ -306,11 +385,11 @@ export const DashboardOverview: React.FC<Props> = ({ documents, rates }) => {
               {totalSubmitted}
             </div>
             <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 block">
-              8. ຍື່ນແລ້ວທັງໝົດ
+              ຍື່ນແລ້ວທັງໝົດ
             </span>
           </div>
 
-          {/* 9. Total Tracked */}
+          {/* Total Tracked */}
           <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm text-center space-y-1">
             <div className="p-2.5 bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 rounded-xl w-10 h-10 mx-auto flex items-center justify-center">
               <Eye className="w-5 h-5" />
@@ -319,11 +398,11 @@ export const DashboardOverview: React.FC<Props> = ({ documents, rates }) => {
               {totalTracked}
             </div>
             <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 block">
-              9. ຕິດຕາມແລ້ວ
+              ຕິດຕາມແລ້ວ
             </span>
           </div>
 
-          {/* 10. Total Completed */}
+          {/* Total Completed */}
           <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm text-center space-y-1 col-span-2 sm:col-span-1">
             <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-xl w-10 h-10 mx-auto flex items-center justify-center">
               <CheckCircle2 className="w-5 h-5" />
@@ -332,7 +411,7 @@ export const DashboardOverview: React.FC<Props> = ({ documents, rates }) => {
               {totalCompleted}
             </div>
             <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 block">
-              10. ດຳເນີນສຳເລັດ
+              ດຳເນີນສຳເລັດ
             </span>
           </div>
 
@@ -342,3 +421,4 @@ export const DashboardOverview: React.FC<Props> = ({ documents, rates }) => {
     </div>
   );
 };
+

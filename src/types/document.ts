@@ -212,5 +212,6 @@ export interface FilterState {
   software: string; // 'ALL' | 'APIS' | 'TSD' | 'PKT' | 'RENEW_2026' | 'OTHER'
   renewal2026Only: boolean;
   companyType?: string; // 'ALL' | 'NEW_ONLY' | 'EXISTING_ONLY'
+  workflowStep?: string; // 'ALL' | 'STAMPED' | 'UNSTAMPED' | 'ASSEMBLED' | 'UNASSEMBLED' | 'SUBMITTED' | 'UNSUBMITTED' | 'TRACKED' | 'UNTRACKED'
   searchQuery: string;
 }

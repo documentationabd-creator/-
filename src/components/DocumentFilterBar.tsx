@@ -156,8 +156,8 @@ export const DocumentFilterBar: React.FC<Props> = ({
         </button>
       </div>
 
-      {/* Filter Select Controls Grid (1. Line, 2. Urgency, 3. Status, 4. Payment, 5. Software, 6. Company Type, 7. Renewal) */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2.5 pt-1 text-xs">
+      {/* Filter Select Controls Grid (1. Line, 2. Urgency, 3. Status, 4. Payment, 5. Software, 6. Company Type, 7. Workflow Step, 8. Renewal) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5 pt-1 text-xs">
         
         {/* 1. Line */}
         <div>
@@ -167,7 +167,7 @@ export const DocumentFilterBar: React.FC<Props> = ({
           <select
             value={filters.line}
             onChange={(e) => onFilterChange({ ...filters, line: e.target.value })}
-            className="w-full px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-medium"
+            className="w-full px-2 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-medium text-[11px]"
           >
             <option value="ALL">ທຸກສາຍວຽກ</option>
             {LINE_OPTIONS.filter((l) => l !== 'ALL').map((line) => (
@@ -184,7 +184,7 @@ export const DocumentFilterBar: React.FC<Props> = ({
           <select
             value={filters.urgency}
             onChange={(e) => onFilterChange({ ...filters, urgency: e.target.value })}
-            className="w-full px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-medium"
+            className="w-full px-2 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-medium text-[11px]"
           >
             <option value="ALL">ທຸກຄວາມສຳຄັນ</option>
             <option value="NORMAL">ປົກກະຕິ</option>
@@ -200,7 +200,7 @@ export const DocumentFilterBar: React.FC<Props> = ({
           <select
             value={filters.status}
             onChange={(e) => onFilterChange({ ...filters, status: e.target.value })}
-            className="w-full px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-medium"
+            className="w-full px-2 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-medium text-[11px]"
           >
             <option value="ALL">ທຸກສະຖານະ</option>
             <option value="COMPLETED">ສຳເລັດ</option>
@@ -214,12 +214,12 @@ export const DocumentFilterBar: React.FC<Props> = ({
         {/* 4. Payment Status */}
         <div>
           <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
-            4. ສະຖານະຊຳລະເງິນ
+            4. ສະຖານະຊຳລະ
           </label>
           <select
             value={filters.paymentStatus}
             onChange={(e) => onFilterChange({ ...filters, paymentStatus: e.target.value })}
-            className="w-full px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-medium"
+            className="w-full px-2 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-medium text-[11px]"
           >
             <option value="ALL">ທຸກສະຖານະຊຳລະ</option>
             <option value="PAID">ລູກຄ້າຊຳລະແລ້ວ</option>
@@ -237,7 +237,7 @@ export const DocumentFilterBar: React.FC<Props> = ({
           <select
             value={filters.software}
             onChange={(e) => onFilterChange({ ...filters, software: e.target.value })}
-            className="w-full px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-medium"
+            className="w-full px-2 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-medium text-[11px]"
           >
             <option value="ALL">ທຸກໂປຣແກຣມ</option>
             <option value="APIS">APIS</option>
@@ -256,7 +256,7 @@ export const DocumentFilterBar: React.FC<Props> = ({
           <select
             value={filters.companyType || 'ALL'}
             onChange={(e) => onFilterChange({ ...filters, companyType: e.target.value })}
-            className="w-full px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-medium"
+            className="w-full px-2 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-medium text-[11px]"
           >
             <option value="ALL">ທຸກບໍລິສັດ</option>
             <option value="NEW_ONLY">ບໍລິສັດເຂົ້າໃໝ່ 🆕</option>
@@ -264,7 +264,29 @@ export const DocumentFilterBar: React.FC<Props> = ({
           </select>
         </div>
 
-        {/* 7. Renewal 2026 Filter Checkbox */}
+        {/* 7. Workflow Step (4 ຂັ້ນຕອນ) */}
+        <div>
+          <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
+            7. ຂັ້ນຕອນວຽກ
+          </label>
+          <select
+            value={filters.workflowStep || 'ALL'}
+            onChange={(e) => onFilterChange({ ...filters, workflowStep: e.target.value })}
+            className="w-full px-2 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-medium text-[11px]"
+          >
+            <option value="ALL">ທຸກຂັ້ນຕອນ</option>
+            <option value="STAMPED">✓ ຈ້ຳກາແລ້ວ</option>
+            <option value="UNSTAMPED">⏳ ຍັງບໍ່ຈ້ຳກາ</option>
+            <option value="ASSEMBLED">✓ ປະກອບແລ້ວ</option>
+            <option value="UNASSEMBLED">⏳ ຍັງບໍ່ປະກອບ</option>
+            <option value="SUBMITTED">✓ ຍື່ນແລ້ວ</option>
+            <option value="UNSUBMITTED">⏳ ຍັງບໍ່ຍື່ນ</option>
+            <option value="TRACKED">✓ ຕິດຕາມແລ້ວ</option>
+            <option value="UNTRACKED">⏳ ຍັງບໍ່ຕິດຕາມ</option>
+          </select>
+        </div>
+
+        {/* 8. Renewal 2026 Filter Checkbox */}
         <div className="flex items-end pb-1">
           <label className="inline-flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 font-semibold cursor-pointer w-full justify-center">
             <input

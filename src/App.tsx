@@ -49,6 +49,7 @@ export default function App() {
     software: 'ALL',
     renewal2026Only: false,
     companyType: 'ALL',
+    workflowStep: 'ALL',
     searchQuery: '',
   });
 
@@ -114,7 +115,19 @@ export default function App() {
       if (filters.companyType === 'EXISTING_ONLY' && doc.isNewCompany) return false;
     }
 
-    // 8. Search query filter across all fields
+    // 8. Workflow Step filter (4 ຂັ້ນຕອນ: ຈ້ຳກາ, ປະກອບ, ຍື່ນ, ຕິດຕາມ)
+    if (filters.workflowStep && filters.workflowStep !== 'ALL') {
+      if (filters.workflowStep === 'STAMPED' && !doc.isStamped) return false;
+      if (filters.workflowStep === 'UNSTAMPED' && doc.isStamped) return false;
+      if (filters.workflowStep === 'ASSEMBLED' && !doc.isAssembled) return false;
+      if (filters.workflowStep === 'UNASSEMBLED' && doc.isAssembled) return false;
+      if (filters.workflowStep === 'SUBMITTED' && !doc.isSubmitted) return false;
+      if (filters.workflowStep === 'UNSUBMITTED' && doc.isSubmitted) return false;
+      if (filters.workflowStep === 'TRACKED' && !doc.isTracked) return false;
+      if (filters.workflowStep === 'UNTRACKED' && doc.isTracked) return false;
+    }
+
+    // 9. Search query filter across all fields
     if (filters.searchQuery.trim()) {
       const q = filters.searchQuery.toLowerCase().trim();
       const matchName = doc.companyName.toLowerCase().includes(q);

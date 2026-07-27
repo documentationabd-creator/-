@@ -48,6 +48,7 @@ export const ConsolidatedAllInOneView: React.FC<Props> = ({
   const [paymentFilter, setPaymentFilter] = useState<string>('ALL');
   const [urgencyFilter, setUrgencyFilter] = useState<string>('ALL');
   const [companyTypeFilter, setCompanyTypeFilter] = useState<string>('ALL');
+  const [stepFilter, setStepFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Extract unique lines for filter dropdown
@@ -72,6 +73,17 @@ export const ConsolidatedAllInOneView: React.FC<Props> = ({
         if (companyTypeFilter === 'EXISTING_ONLY' && doc.isNewCompany) return false;
       }
 
+      if (stepFilter !== 'ALL') {
+        if (stepFilter === 'STAMPED' && !doc.isStamped) return false;
+        if (stepFilter === 'UNSTAMPED' && doc.isStamped) return false;
+        if (stepFilter === 'ASSEMBLED' && !doc.isAssembled) return false;
+        if (stepFilter === 'UNASSEMBLED' && doc.isAssembled) return false;
+        if (stepFilter === 'SUBMITTED' && !doc.isSubmitted) return false;
+        if (stepFilter === 'UNSUBMITTED' && doc.isSubmitted) return false;
+        if (stepFilter === 'TRACKED' && !doc.isTracked) return false;
+        if (stepFilter === 'UNTRACKED' && doc.isTracked) return false;
+      }
+
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         const matchName = doc.companyName.toLowerCase().includes(q);
@@ -87,7 +99,7 @@ export const ConsolidatedAllInOneView: React.FC<Props> = ({
 
       return true;
     });
-  }, [documents, lineFilter, statusFilter, paymentFilter, urgencyFilter, companyTypeFilter, searchQuery]);
+  }, [documents, lineFilter, statusFilter, paymentFilter, urgencyFilter, companyTypeFilter, stepFilter, searchQuery]);
 
   // Financial calculations helper for a single document
   const calculateDocFinancials = (doc: DocumentRecord) => {
@@ -282,7 +294,7 @@ export const ConsolidatedAllInOneView: React.FC<Props> = ({
           <span>ຕົວກັ່ນກອງ & ຄົ້ນຫາຂໍ້ມູນຕາຕະລາງລວມ</span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3">
           
           {/* Search Query */}
           <div className="relative">
@@ -319,6 +331,23 @@ export const ConsolidatedAllInOneView: React.FC<Props> = ({
             <option value="ALL">ທຸກປະເພດບໍລິສັດ (ALL)</option>
             <option value="NEW_ONLY">ບໍລິສັດເຂົ້າໃໝ່ 🆕 (New)</option>
             <option value="EXISTING_ONLY">ບໍລິສັດເກົ່າ (Existing)</option>
+          </select>
+
+          {/* Workflow Step Filter (4 ຂັ້ນຕອນ) */}
+          <select
+            value={stepFilter}
+            onChange={(e) => setStepFilter(e.target.value)}
+            className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-medium"
+          >
+            <option value="ALL">ທຸກຂັ້ນຕອນ (ALL)</option>
+            <option value="STAMPED">✓ ຈ້ຳກາແລ້ວ</option>
+            <option value="UNSTAMPED">⏳ ຍັງບໍ່ຈ້ຳກາ</option>
+            <option value="ASSEMBLED">✓ ປະກອບແລ້ວ</option>
+            <option value="UNASSEMBLED">⏳ ຍັງບໍ່ປະກອບ</option>
+            <option value="SUBMITTED">✓ ຍື່ນແລ້ວ</option>
+            <option value="UNSUBMITTED">⏳ ຍັງບໍ່ຍື່ນ</option>
+            <option value="TRACKED">✓ ຕິດຕາມແລ້ວ</option>
+            <option value="UNTRACKED">⏳ ຍັງບໍ່ຕິດຕາມ</option>
           </select>
 
           {/* Status Filter */}
@@ -366,7 +395,7 @@ export const ConsolidatedAllInOneView: React.FC<Props> = ({
           <span>
             ສະແດງ: <strong>{filteredDocs.length}</strong> / {documents.length} ບໍລິສັດ
           </span>
-          {(lineFilter !== 'ALL' || statusFilter !== 'ALL' || paymentFilter !== 'ALL' || urgencyFilter !== 'ALL' || companyTypeFilter !== 'ALL' || searchQuery) && (
+          {(lineFilter !== 'ALL' || statusFilter !== 'ALL' || paymentFilter !== 'ALL' || urgencyFilter !== 'ALL' || companyTypeFilter !== 'ALL' || stepFilter !== 'ALL' || searchQuery) && (
             <button
               onClick={() => {
                 setLineFilter('ALL');
@@ -374,6 +403,7 @@ export const ConsolidatedAllInOneView: React.FC<Props> = ({
                 setPaymentFilter('ALL');
                 setUrgencyFilter('ALL');
                 setCompanyTypeFilter('ALL');
+                setStepFilter('ALL');
                 setSearchQuery('');
               }}
               className="text-blue-600 dark:text-blue-400 hover:underline font-bold"
