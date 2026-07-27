@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Building2, LayoutDashboard, Laptop, BarChart3, Bell, RefreshCw, Plus, FileSpreadsheet, RotateCcw, DollarSign, Coins, Table, FolderDown } from 'lucide-react';
+import { Building2, LayoutDashboard, Laptop, BarChart3, Bell, RefreshCw, Plus, FileSpreadsheet, RotateCcw, DollarSign, Coins, Table, FolderDown, AlertTriangle } from 'lucide-react';
 import { DocumentRecord, ExchangeRates } from '../types/document';
 import { formatCurrencyLAK } from '../utils/formatters';
 import { NotificationPopover } from './NotificationPopover';
+import { QuickAlertsPopover } from './QuickAlertsPopover';
 
 interface Props {
   activeTab: number; // 1, 2, 3, 4
@@ -28,6 +29,7 @@ export const Header: React.FC<Props> = ({
   onResetSeedData,
 }) => {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [isQuickAlertsOpen, setIsQuickAlertsOpen] = useState(false);
 
   // Compute pending alert count for bell badge
   const pendingAlertsCount = documents.filter((d) => {
@@ -35,6 +37,21 @@ export const Header: React.FC<Props> = ({
     const isWaitingDocs = d.operationStatus === 'WAITING_DOCS';
     const isUnpaid = d.customerPayment.paymentStatus === 'UNPAID';
     return isUrgentPending || isWaitingDocs || isUnpaid;
+  }).length;
+
+  // Compute expired or expiring in 7 days count for Quick Alerts
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const quickAlertsCount = documents.filter((d) => {
+    if (!d.expiryDate) return false;
+    const expDate = new Date(d.expiryDate);
+    if (isNaN(expDate.getTime())) return false;
+    expDate.setHours(0, 0, 0, 0);
+
+    const diffMs = expDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    return diffDays <= 7;
   }).length;
 
   return (
@@ -72,10 +89,44 @@ export const Header: React.FC<Props> = ({
                 </div>
               </button>
 
+              {/* Quick Alerts Button */}
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    setIsQuickAlertsOpen(!isQuickAlertsOpen);
+                    setIsNotificationOpen(false);
+                  }}
+                  className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border transition text-xs font-bold ${
+                    quickAlertsCount > 0
+                      ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 hover:bg-rose-100'
+                      : 'bg-slate-100 dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-200'
+                  }`}
+                  title="Quick Alerts: ເອກະສານໝົດອາຍຸ ແລະ ໃກ້ໝົດອາຍຸໃນ 7 ວັນ"
+                >
+                  <AlertTriangle className={`w-4 h-4 ${quickAlertsCount > 0 ? 'text-rose-600 dark:text-rose-400 animate-pulse' : 'text-slate-500'}`} />
+                  <span className="hidden sm:inline">Quick Alerts</span>
+                  <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${
+                    quickAlertsCount > 0 ? 'bg-rose-500 text-white' : 'bg-slate-300 dark:bg-slate-600 text-slate-700 dark:text-slate-200'
+                  }`}>
+                    {quickAlertsCount}
+                  </span>
+                </button>
+
+                <QuickAlertsPopover
+                  isOpen={isQuickAlertsOpen}
+                  onClose={() => setIsQuickAlertsOpen(false)}
+                  documents={documents}
+                  onSelectDocument={onSelectDocument}
+                />
+              </div>
+
               {/* Notification Bell */}
               <div className="relative">
                 <button
-                  onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+                  onClick={() => {
+                    setIsNotificationOpen(!isNotificationOpen);
+                    setIsQuickAlertsOpen(false);
+                  }}
                   className="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl relative transition"
                   title="ການແຈ້ງເຕືອນ Real-time"
                 >

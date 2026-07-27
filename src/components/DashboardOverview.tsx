@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { DollarSign, Clock, Building2, Calendar, AlertTriangle, CheckCircle2, FileCheck, Send, Eye, ShieldCheck, Printer, ArrowUpRight, TrendingUp, RefreshCw } from 'lucide-react';
+import { DollarSign, Clock, Building2, Calendar, AlertTriangle, CheckCircle2, FileCheck, Send, Eye, ShieldCheck, Printer, ArrowUpRight, TrendingUp, RefreshCw, BarChart3 } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { DocumentRecord, ExchangeRates, TimeframeType } from '../types/document';
 import { convertToTotalLAK, formatCurrencyLAK, formatCurrencyUSD, formatCurrencyCNY } from '../utils/formatters';
 import { printPDFReport } from '../utils/exportUtils';
@@ -96,6 +97,41 @@ export const DashboardOverview: React.FC<Props> = ({ documents, rates }) => {
     if (isNaN(d.getTime())) return false;
     return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
   }).length;
+
+  // Monthly statistics data for newly opened documents in current year
+  const monthNamesLao = [
+    'ມັງກອນ (1)', 'ກຸມພາ (2)', 'ມີນາ (3)', 'ເມສາ (4)',
+    'ພຶດສະພາ (5)', 'ມິຖຸນາ (6)', 'ກໍລະກົດ (7)', 'ສິງຫາ (8)',
+    'ກັນຍາ (9)', 'ຕຸລາ (10)', 'ພະຈິກ (11)', 'ທັນວາ (12)'
+  ];
+
+  const monthShortLao = [
+    'ເດືອນ 1', 'ເດືອນ 2', 'ເດືອນ 3', 'ເດືອນ 4',
+    'ເດືອນ 5', 'ເດືອນ 6', 'ເດືອນ 7', 'ເດືອນ 8',
+    'ເດືອນ 9', 'ເດືອນ 10', 'ເດືອນ 11', 'ເດືອນ 12'
+  ];
+
+  const monthlyOpenedCounts = Array(12).fill(0);
+
+  documents.forEach((doc) => {
+    if (!doc.workOpenDate) return;
+    const d = new Date(doc.workOpenDate);
+    if (!isNaN(d.getTime()) && d.getFullYear() === currentYear) {
+      const m = d.getMonth();
+      if (m >= 0 && m < 12) {
+        monthlyOpenedCounts[m]++;
+      }
+    }
+  });
+
+  const monthlyOpenedData = monthShortLao.map((shortName, i) => ({
+    month: shortName,
+    fullName: monthNamesLao[i],
+    openedCount: monthlyOpenedCounts[i],
+    isCurrentMonth: i === currentMonth,
+  }));
+
+  const yearlyOpenedTotal = monthlyOpenedCounts.reduce((acc, c) => acc + c, 0);
 
   // 5. Urgent Tasks breakdown (Total, Pending, Completed)
   const urgentTotal = filteredDocs.filter((doc) => doc.urgency === 'URGENT').length;
@@ -400,6 +436,81 @@ export const DashboardOverview: React.FC<Props> = ({ documents, rates }) => {
             </p>
           </div>
 
+        </div>
+
+        {/* Monthly Opened Work Bar Chart */}
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-700 pb-3">
+            <div className="flex items-center space-x-2">
+              <div className="p-2 bg-indigo-100 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400 rounded-xl">
+                <BarChart3 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-800 dark:text-slate-100 text-base">
+                  ກາຟສະຖິຕິການເປີດວຽກໃໝ່ ລາຍເດືອນ (ປີ {currentYear})
+                </h3>
+                <p className="text-xs text-slate-400">
+                  ປຽບທຽບຈຳນວນເອກະສານ/ບໍລິສັດ ທີ່ເປີດວຽກໃໝ່ໃນແຕ່ລະເດືອນ
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="px-3 py-1 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 font-extrabold text-xs rounded-full border border-indigo-200 dark:border-indigo-800">
+                ລວມເປີດວຽກປີ {currentYear}: {yearlyOpenedTotal} ບໍລິສັດ
+              </span>
+            </div>
+          </div>
+
+          <div className="h-72 w-full pt-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={monthlyOpenedData} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" strokeOpacity={0.15} />
+                <XAxis 
+                  dataKey="month" 
+                  tick={{ fontSize: 11, fill: '#64748b' }}
+                  axisLine={{ stroke: '#cbd5e1' }}
+                  tickLine={false}
+                />
+                <YAxis 
+                  allowDecimals={false}
+                  tick={{ fontSize: 11, fill: '#64748b' }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Tooltip 
+                  cursor={{ fill: 'rgba(99, 102, 241, 0.08)' }}
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      return (
+                        <div className="bg-slate-900 text-white p-3 rounded-xl shadow-lg border border-slate-700 text-xs space-y-1">
+                          <p className="font-bold text-indigo-300">{data.fullName}</p>
+                          <p className="text-slate-200">
+                            ເປີດວຽກໃໝ່: <span className="font-bold text-emerald-400 text-sm">{data.openedCount}</span> ບໍລິສັດ
+                          </p>
+                          {data.isCurrentMonth && (
+                            <span className="inline-block px-1.5 py-0.5 bg-indigo-500/30 text-indigo-300 text-[10px] rounded font-medium">
+                              ເດືອນປັດຈຸບັນ
+                            </span>
+                          )}
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Bar dataKey="openedCount" name="ຈຳນວນເປີດວຽກ" radius={[6, 6, 0, 0]}>
+                  {monthlyOpenedData.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={entry.isCurrentMonth ? '#6366f1' : '#818cf8'} 
+                      opacity={entry.openedCount > 0 ? (entry.isCurrentMonth ? 1 : 0.85) : 0.3}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
         {/* Urgent Tasks Detailed Breakdown */}

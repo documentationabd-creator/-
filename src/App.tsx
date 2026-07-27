@@ -181,7 +181,7 @@ export default function App() {
       const newRecord: DocumentRecord = {
         ...(docData as DocumentRecord),
         id: newId,
-        seq: documents.length + 1,
+        seq: docData.seq || documents.length + 1,
         auditTrail: [
           {
             id: `audit-${Date.now()}`,
