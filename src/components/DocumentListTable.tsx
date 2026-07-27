@@ -83,7 +83,7 @@ export const DocumentListTable: React.FC<Props> = ({
                 >
                   {/* Sequence */}
                   <td className="py-3 px-3 text-center font-bold text-slate-500">
-                    {idx + 1}
+                    {doc.seq !== undefined && doc.seq !== null ? doc.seq : idx + 1}
                   </td>
 
                   {/* Company Name & Line */}

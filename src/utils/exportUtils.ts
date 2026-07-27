@@ -8,7 +8,7 @@ export function exportDocumentsToExcel(documents: DocumentRecord[], rates: Excha
     const outstandingLAK = convertToTotalLAK(doc.customerPayment.outstandingBalance, rates);
     
     return {
-      'ລຳດັບ': idx + 1,
+      'ລຳດັບ': doc.seq !== undefined && doc.seq !== null ? doc.seq : idx + 1,
       'ລາຍຊື່ບໍລິສັດ': doc.companyName,
       'ປະເພດ': doc.isNewCompany ? 'ບໍລິສັດໃໝ່' : (doc.isContractRenewal ? 'ຕໍ່ສັນຍາ' : 'ປົກກະຕິ'),
       'ສາຍ': doc.line,
