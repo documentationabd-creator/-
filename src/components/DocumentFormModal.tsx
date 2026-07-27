@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Building2, FileText, Calendar, MapPin, Laptop, DollarSign, ShieldCheck, Check, AlertCircle, Plus, Upload, Trash2 } from 'lucide-react';
+import { X, Save, Building2, FileText, Calendar, MapPin, Laptop, DollarSign, ShieldCheck, Check, AlertCircle, Plus, Upload, Trash2, Download, MessageSquare } from 'lucide-react';
 import { DocumentRecord, ExchangeRates, OperationStatusType, PaymentStatusType, ReimbursementStatusType, UrgencyType } from '../types/document';
 import { calculateDefaultExpiryDate, calculateProcessingDays, convertToTotalLAK, formatCurrencyLAK } from '../utils/formatters';
+import { downloadAttachmentFile } from '../utils/fileDownloadUtils';
 
 interface Props {
   isOpen: boolean;
@@ -31,7 +32,7 @@ export const DocumentFormModal: React.FC<Props> = ({
   onSave,
   totalRecordsCount,
 }) => {
-  const [activeTab, setActiveTab] = useState<'GENERAL' | 'FILES' | 'SUBMISSION' | 'SOFTWARE' | 'FINANCIAL' | 'USERS'>('GENERAL');
+  const [activeTab, setActiveTab] = useState<'GENERAL' | 'FILES' | 'SUBMISSION' | 'SOFTWARE' | 'FINANCIAL' | 'USERS' | 'REMARKS'>('GENERAL');
   
   // Local state initialized with empty or edit object
   const [formData, setFormData] = useState<Partial<DocumentRecord>>({});
@@ -39,7 +40,14 @@ export const DocumentFormModal: React.FC<Props> = ({
 
   useEffect(() => {
     if (documentToEdit) {
-      setFormData(JSON.parse(JSON.stringify(documentToEdit)));
+      const parsed = JSON.parse(JSON.stringify(documentToEdit));
+      if (!parsed.documentExchangeRates) {
+        parsed.documentExchangeRates = {
+          USD_TO_LAK: rates?.USD_TO_LAK || 21800,
+          CNY_TO_LAK: rates?.CNY_TO_LAK || 3050,
+        };
+      }
+      setFormData(parsed);
       if (!LINE_OPTIONS.includes(documentToEdit.line || '')) {
         setCustomLine(documentToEdit.line || '');
       }
@@ -52,6 +60,10 @@ export const DocumentFormModal: React.FC<Props> = ({
         isNewCompany: false,
         isContractRenewal: false,
         line: 'A',
+        documentExchangeRates: {
+          USD_TO_LAK: rates?.USD_TO_LAK || 21800,
+          CNY_TO_LAK: rates?.CNY_TO_LAK || 3050,
+        },
         incomingNo: `IN-${new Date().getFullYear()}-${String(totalRecordsCount + 1).padStart(4, '0')}`,
         workOpenDate: today,
         tinNo: '',
@@ -193,18 +205,24 @@ export const DocumentFormModal: React.FC<Props> = ({
     onClose();
   };
 
-  // Helper file uploader simulation
-  const handleFileUpload = (fieldKey: keyof DocumentRecord, fileName: string) => {
-    const fileObj = {
-      name: fileName,
-      url: '#',
-      size: '1.5MB',
-      uploadedAt: new Date().toISOString().split('T')[0],
+  // Helper file uploader
+  const handleFileUpload = (fieldKey: keyof DocumentRecord, fileObjRaw: File) => {
+    const sizeMB = (fileObjRaw.size / (1024 * 1024)).toFixed(1) + ' MB';
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      const fileObj = {
+        name: fileObjRaw.name,
+        url: dataUrl || '#',
+        size: sizeMB,
+        uploadedAt: new Date().toLocaleDateString('lo-LA'),
+      };
+      setFormData((prev) => ({
+        ...prev,
+        [fieldKey]: fileObj,
+      }));
     };
-    setFormData((prev) => ({
-      ...prev,
-      [fieldKey]: fileObj,
-    }));
+    reader.readAsDataURL(fileObjRaw);
   };
 
   return (
@@ -313,6 +331,19 @@ export const DocumentFormModal: React.FC<Props> = ({
           >
             <ShieldCheck className="w-3.5 h-3.5" />
             <span>6. USER & ລິ້ງອອກບິນ</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('REMARKS')}
+            className={`px-4 py-3 border-b-2 font-semibold whitespace-nowrap transition flex items-center space-x-1.5 ${
+              activeTab === 'REMARKS'
+                ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400'
+                : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+            }`}
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            <span>7. ໝາຍເຫດ & ບັນທຶກ</span>
           </button>
         </div>
 
@@ -585,16 +616,28 @@ export const DocumentFormModal: React.FC<Props> = ({
                       </span>
                       {currentFile ? (
                         <div className="flex items-center justify-between bg-white dark:bg-slate-800 p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs">
-                          <span className="truncate text-blue-600 font-medium max-w-[180px]">
+                          <span className="truncate text-blue-600 font-medium max-w-[160px]">
                             {currentFile.name}
                           </span>
-                          <button
-                            type="button"
-                            onClick={() => setFormData({ ...formData, [item.key]: undefined })}
-                            className="text-rose-500 hover:text-rose-700 p-1"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          <div className="flex items-center space-x-1">
+                            <button
+                              type="button"
+                              onClick={() => downloadAttachmentFile(currentFile, formData.companyName || '', item.label)}
+                              className="text-emerald-600 hover:text-emerald-700 p-1 flex items-center space-x-1 bg-emerald-50 dark:bg-emerald-950/60 rounded px-1.5 py-0.5 text-[10px] font-bold"
+                              title="ດາວໂຫຼດໄຟລ໌ນີ້"
+                            >
+                              <Download className="w-3 h-3" />
+                              <span>Download</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setFormData({ ...formData, [item.key]: undefined })}
+                              className="text-rose-500 hover:text-rose-700 p-1 rounded hover:bg-rose-50 dark:hover:bg-rose-950/50"
+                              title="ລຶບໄຟລ໌"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
                       ) : (
                         <div className="flex items-center space-x-2">
@@ -604,7 +647,7 @@ export const DocumentFormModal: React.FC<Props> = ({
                             className="hidden"
                             onChange={(e) => {
                               if (e.target.files && e.target.files[0]) {
-                                handleFileUpload(item.key as keyof DocumentRecord, e.target.files[0].name);
+                                handleFileUpload(item.key as keyof DocumentRecord, e.target.files[0]);
                               }
                             }}
                           />
@@ -1043,6 +1086,63 @@ export const DocumentFormModal: React.FC<Props> = ({
           {/* TAB 5: FINANCIAL & EXPENSES */}
           {activeTab === 'FINANCIAL' && (
             <div className="space-y-4">
+
+              {/* Section 36: Document Exchange Rates */}
+              <div className="p-4 bg-blue-50/80 dark:bg-blue-950/40 rounded-xl border border-blue-200 dark:border-blue-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-bold text-blue-900 dark:text-blue-300 text-xs">
+                    36. ອັດຕາແລກປ່ຽນປະຈຳບໍລິສັດ (Document Exchange Rates)
+                  </h4>
+                  <span className="text-[10px] text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/60 px-2 py-0.5 rounded-full font-semibold">
+                    ບັນທຶກປະຈຳບໍລິສັດນີ້
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-slate-700 dark:text-slate-300 mb-1 font-semibold">
+                      💵 1 USD ＝ (LAK)
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.documentExchangeRates?.USD_TO_LAK || 21800}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          documentExchangeRates: {
+                            ...(formData.documentExchangeRates || { USD_TO_LAK: 21800, CNY_TO_LAK: 3050 }),
+                            USD_TO_LAK: Number(e.target.value) || 21800,
+                          },
+                        })
+                      }
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 font-bold text-xs text-blue-800 dark:text-blue-300"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs text-slate-700 dark:text-slate-300 mb-1 font-semibold">
+                      💴 1 CNY ＝ (LAK)
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.documentExchangeRates?.CNY_TO_LAK || 3050}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          documentExchangeRates: {
+                            ...(formData.documentExchangeRates || { USD_TO_LAK: 21800, CNY_TO_LAK: 3050 }),
+                            CNY_TO_LAK: Number(e.target.value) || 3050,
+                          },
+                        })
+                      }
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 font-bold text-xs text-rose-800 dark:text-rose-300"
+                    />
+                  </div>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  💡 ບໍລິສັດນີ້ຈະບັນທຶກ ແລະ ໃຊ້ອັດຕາແລກປ່ຽນນີ້ຕາມທີ່ກຳນົດໄວ້ເບື້ອງຕົ້ນ.
+                </p>
+              </div>
+
               {/* Section 29: Total Revenue */}
               <div className="p-4 bg-emerald-50/60 dark:bg-emerald-950/30 rounded-xl border border-emerald-200 dark:border-emerald-800 space-y-3">
                 <h4 className="font-bold text-emerald-800 dark:text-emerald-300 text-xs">
@@ -1095,7 +1195,7 @@ export const DocumentFormModal: React.FC<Props> = ({
                   </div>
                 </div>
                 <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-300">
-                  ລວມລາຍຮັບຄິດເປັນເງິນກີບ Auto: {formatCurrencyLAK(convertToTotalLAK(formData.totalValue as any, rates))}
+                  ລວມລາຍຮັບຄິດເປັນເງິນກີບ Auto: {formatCurrencyLAK(convertToTotalLAK(formData.totalValue as any, formData.documentExchangeRates || rates))}
                 </p>
               </div>
 
@@ -1423,6 +1523,151 @@ export const DocumentFormModal: React.FC<Props> = ({
                       className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-xs"
                     />
                   </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 7: REMARKS & NOTES */}
+          {activeTab === 'REMARKS' && (
+            <div className="space-y-4">
+              <div className="p-4 bg-emerald-50/70 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-800 space-y-3">
+                <h4 className="font-bold text-emerald-900 dark:text-emerald-300 text-xs flex items-center space-x-2">
+                  <MessageSquare className="w-4 h-4 text-emerald-600" />
+                  <span>7. ໝາຍເຫດ & ບັນທຶກທົ່ວໄປ (General Document Remarks)</span>
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  ບັນທຶກຂໍ້ມູນເພີ່ມເຕີມ, ຂໍ້ສັງເກດ ຫຼື ເງື່ອນໄຂພິເສດສຳລັບບໍລິສັດຕິດຕາມນີ້
+                </p>
+                <textarea
+                  rows={4}
+                  value={formData.generalRemarks || ''}
+                  onChange={(e) => setFormData({ ...formData, generalRemarks: e.target.value })}
+                  placeholder="ປ້ອນໝາຍເຫດ ແລະ ບັນທຶກເພີ່ມເຕີມທົ່ວໄປ..."
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-medium text-xs"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Software Remarks */}
+                <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    ໝາຍເຫດການຕິດຕັ້ງໂປຣແກຣມ (Software Installation Remarks)
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={formData.softwareInstallation?.remarks || ''}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        softwareInstallation: {
+                          ...(formData.softwareInstallation || {
+                            renew2026: false,
+                            apis: false,
+                            tsd: false,
+                            pkt: false,
+                            other: '',
+                            isInstalled: false,
+                            installTarget: '',
+                            pcReceiveDate: '',
+                            clientPickupDate: '',
+                            remarks: '',
+                          }),
+                          remarks: e.target.value,
+                        },
+                      })
+                    }
+                    placeholder="ໝາຍເຫດໂປຣແກຣມ, PC..."
+                    className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-xs"
+                  />
+                </div>
+
+                {/* Post Completion Remarks */}
+                <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    ໝາຍເຫດຫຼັງສຳເລັດເອກະສານ (Post Completion Remarks)
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={formData.postCompletion?.remarks || ''}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        postCompletion: {
+                          ...(formData.postCompletion || {
+                            inGolonoFolder: false,
+                            hasLicenseNo: false,
+                            licenseNo: '',
+                            licenseDate: '',
+                            sentToHeadAndCoord: false,
+                            fileSentDate: '',
+                            remarks: '',
+                          }),
+                          remarks: e.target.value,
+                        },
+                      })
+                    }
+                    placeholder="ໝາຍເຫດເລກໃບອະນຸຍາດ, ການສົ່ງໄຟລ໌..."
+                    className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-xs"
+                  />
+                </div>
+
+                {/* Installation Expense Remarks */}
+                <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    ໝາຍເຫດຄ່າເບີກຕິດຕັ້ງ (Installation Expense Remarks)
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={formData.installationExpense?.remarks || ''}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        installationExpense: {
+                          ...(formData.installationExpense || {
+                            isReimbursed: false,
+                            reimbursementStatus: 'NOT_REIMBURSED',
+                            disbursementDate: '',
+                            lakCost: 0,
+                            usdCost: 0,
+                            remarks: '',
+                          }),
+                          remarks: e.target.value,
+                        },
+                      })
+                    }
+                    placeholder="ໝາຍເຫດຄ່າໃຊ້ຈ່າຍຕິດຕັ້ງ..."
+                    className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-xs"
+                  />
+                </div>
+
+                {/* Contract Remarks */}
+                <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    ໝາຍເຫດສັນຍາຕິດຕັ້ງ (Contract Remarks)
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={formData.installationContract?.remarks || ''}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        installationContract: {
+                          ...(formData.installationContract || {
+                            hasContract: false,
+                            contractNo: '',
+                            signingDate: '',
+                            contractValueLAK: 0,
+                            contractValueUSD: 0,
+                            remarks: '',
+                          }),
+                          remarks: e.target.value,
+                        },
+                      })
+                    }
+                    placeholder="ໝາຍເຫດສັນຍາ, ເງື່ອນໄຂ..."
+                    className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-xs"
+                  />
                 </div>
               </div>
             </div>

@@ -1,7 +1,8 @@
 import React from 'react';
-import { X, Building2, FileText, DollarSign, Calendar, MapPin, CheckCircle2, AlertCircle, Clock, ShieldCheck, Download, History, Edit, ExternalLink, Laptop } from 'lucide-react';
+import { X, Building2, FileText, DollarSign, Calendar, MapPin, CheckCircle2, AlertCircle, Clock, ShieldCheck, Download, History, Edit, ExternalLink, Laptop, FolderDown } from 'lucide-react';
 import { DocumentRecord, ExchangeRates } from '../types/document';
 import { convertToTotalLAK, formatCurrencyLAK, formatDateDisplay, formatMultiCurrencySummary, getOperationStatusLabel, getPaymentStatusLabel, getUrgencyLabel } from '../utils/formatters';
+import { downloadAttachmentFile } from '../utils/fileDownloadUtils';
 
 interface Props {
   isOpen: boolean;
@@ -321,6 +322,92 @@ export const DocumentDetailModal: React.FC<Props> = ({
                   </a>
                 )}
               </div>
+            </div>
+          </div>
+
+          {/* Section 7: ໄຟລ໌ແນບເອກະສານ & ດາວໂຫຼດ */}
+          <div className="space-y-3">
+            <h3 className="font-semibold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-700 pb-2 flex items-center space-x-2">
+              <FolderDown className="w-4 h-4 text-emerald-600" />
+              <span>7. ໄຟລ໌ແນບເອກະສານ & ດາວໂຫຼດ (Attached Files)</span>
+            </h3>
+
+            {(() => {
+              const fileEntries = [
+                { label: '6. ໃບເປີດວຽກ', file: doc.workOpenAttachment },
+                { label: '10. ໃບທະບຽນວິສາຫະກິດ', file: doc.registrationAttachment },
+                { label: '11. ໃບສະເໜີ/ບົດບັນທຶກ', file: doc.memoAttachment },
+                { label: '12. ໃບອະນຸຍາດປີຜ່ານມາ', file: doc.prevYearLicenseAttachment },
+                { label: '13. ໃບອມພ/ຢັ້ງຢືນອາກອນ', file: doc.taxCertAttachment },
+                { label: '14. ໃບມອບພັນທະປີຜ່ານມາ', file: doc.prevYearObligationAttachment },
+                { label: '24. ໃບຮັບຍື່ນອາກອນ', file: doc.submissionReceiptAttachment },
+                { label: '27.3 ໃບອະນຸຍາດສຳເລັດ', file: doc.completedDocAttachment },
+                { label: '31. ໃບເບີກຄ່າຕິດຕັ້ງ', file: doc.installationExpense?.paymentAttachment },
+              ].filter((item) => item.file && item.file.name);
+
+              if (fileEntries.length === 0) {
+                return (
+                  <p className="text-xs text-slate-400 italic p-3 bg-slate-50 dark:bg-slate-900/40 rounded-xl">
+                    ບໍ່ມີໄຟລ໌ແນບສຳລັບບໍລິສັດນີ້.
+                  </p>
+                );
+              }
+
+              return (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {fileEntries.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200/80 dark:border-slate-700 text-xs"
+                    >
+                      <div className="truncate pr-2">
+                        <span className="text-[10px] text-slate-400 block font-semibold">
+                          {item.label}
+                        </span>
+                        <span className="font-bold text-slate-800 dark:text-slate-200 truncate block">
+                          {item.file!.name}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => downloadAttachmentFile(item.file!, doc.companyName, item.label)}
+                        className="flex items-center space-x-1 px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-[11px] shrink-0 transition"
+                        title="ດາວໂຫຼດໄຟລ໌ນີ້"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>Download</span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+          </div>
+
+          {/* Section 8: ໝາຍເຫດ & ບັນທຶກເພີ່ມເຕີມ */}
+          <div className="space-y-3">
+            <h3 className="font-semibold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-700 pb-2 flex items-center space-x-2">
+              <FileText className="w-4 h-4 text-emerald-600" />
+              <span>8. ໝາຍເຫດ & ບັນທຶກເພີ່ມເຕີມ (Remarks & Notes)</span>
+            </h3>
+            <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200/80 dark:border-slate-700 space-y-2 text-xs">
+              <div>
+                <span className="font-bold text-slate-700 dark:text-slate-300">ໝາຍເຫດທົ່ວໄປ: </span>
+                <span className="text-slate-600 dark:text-slate-300">
+                  {doc.generalRemarks || 'ບໍ່ມີໝາຍເຫດທົ່ວໄປ'}
+                </span>
+              </div>
+              {doc.softwareInstallation?.remarks && (
+                <div>
+                  <span className="font-bold text-slate-700 dark:text-slate-300">ໝາຍເຫດໂປຣແກຣມ: </span>
+                  <span className="text-slate-600 dark:text-slate-300">{doc.softwareInstallation.remarks}</span>
+                </div>
+              )}
+              {doc.postCompletion?.remarks && (
+                <div>
+                  <span className="font-bold text-slate-700 dark:text-slate-300">ໝາຍເຫດຫຼັງສຳເລັດ: </span>
+                  <span className="text-slate-600 dark:text-slate-300">{doc.postCompletion.remarks}</span>
+                </div>
+              )}
             </div>
           </div>
 

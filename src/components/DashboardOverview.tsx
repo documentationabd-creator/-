@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { DollarSign, Clock, Building2, Calendar, AlertTriangle, CheckCircle2, FileCheck, Send, Eye, ShieldCheck, Printer, ArrowUpRight, TrendingUp } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { DollarSign, Clock, Building2, Calendar, AlertTriangle, CheckCircle2, FileCheck, Send, Eye, ShieldCheck, Printer, ArrowUpRight, TrendingUp, RefreshCw } from 'lucide-react';
 import { DocumentRecord, ExchangeRates, TimeframeType } from '../types/document';
 import { convertToTotalLAK, formatCurrencyLAK, formatCurrencyUSD, formatCurrencyCNY } from '../utils/formatters';
 import { printPDFReport } from '../utils/exportUtils';
@@ -11,6 +11,12 @@ interface Props {
 
 export const DashboardOverview: React.FC<Props> = ({ documents, rates }) => {
   const [timeframe, setTimeframe] = useState<TimeframeType>('1_MONTH');
+  const [lastUpdated, setLastUpdated] = useState<string>(() => new Date().toLocaleTimeString('lo-LA'));
+
+  // Update timestamp on data change
+  useEffect(() => {
+    setLastUpdated(new Date().toLocaleTimeString('lo-LA'));
+  }, [documents, rates, timeframe]);
 
   // Filter documents by selected timeframe
   const getFilteredDocuments = () => {
@@ -76,15 +82,19 @@ export const DashboardOverview: React.FC<Props> = ({ documents, rates }) => {
     0
   );
 
-  // 3. Total Opened Companies in timeframe
-  const totalOpenedCompanies = filteredDocs.length;
+  // 3. Total Opened Companies in main list (sequence count)
+  const totalOpenedCompanies = documents.length;
 
-  // 4. Opened Companies in current month
-  const now = new Date();
-  const openedThisMonth = filteredDocs.filter((doc) => {
+  // 4. Opened Companies in current month (newly opened in month)
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth();
+  const currentYear = currentDate.getFullYear();
+
+  const openedThisMonth = documents.filter((doc) => {
     if (!doc.workOpenDate) return false;
     const d = new Date(doc.workOpenDate);
-    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    if (isNaN(d.getTime())) return false;
+    return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
   }).length;
 
   // 5. Urgent Tasks breakdown (Total, Pending, Completed)
@@ -113,12 +123,25 @@ export const DashboardOverview: React.FC<Props> = ({ documents, rates }) => {
       {/* Timeframe Filter Bar & PDF Export Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm">
         <div>
-          <h2 className="font-bold text-slate-900 dark:text-slate-100 text-lg flex items-center space-x-2">
-            <TrendingUp className="w-5 h-5 text-blue-600" />
-            <span>Dashboard ພາບລວມຜົນງານ ແລະ ສະຖິຕິເອກະສານ</span>
-          </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            ເລືອກໄລຍະເວລາເພື່ອສະແດງຜົນສະຖິຕິຕາມຄວາມຕ້ອງການ
+          <div className="flex items-center space-x-2">
+            <h2 className="font-bold text-slate-900 dark:text-slate-100 text-lg flex items-center space-x-2">
+              <TrendingUp className="w-5 h-5 text-blue-600" />
+              <span>Dashboard ພາບລວມຜົນງານ ແລະ ສະຖິຕິເອກະສານ</span>
+            </h2>
+            <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300/80 dark:border-emerald-700">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span>Real-Time Live</span>
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex items-center space-x-2">
+            <span>ເລືອກໄລຍະເວລາເພື່ອສະແດງຜົນສະຖິຕິຕາມຄວາມຕ້ອງການ</span>
+            <span className="text-slate-300 dark:text-slate-600">•</span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+              ອັບເດດ Real Time ຫຼ້າສຸດ: {lastUpdated}
+            </span>
           </p>
         </div>
 
@@ -355,7 +378,7 @@ export const DashboardOverview: React.FC<Props> = ({ documents, rates }) => {
               {totalOpenedCompanies} <span className="text-sm font-normal text-slate-500">ບໍລິສັດ</span>
             </div>
             <p className="text-[11px] text-slate-400">
-              ຈຳນວນບໍລິສັດທີ່ເປີດວຽກໃນໄລຍະທີ່ເລືອກ
+              ນັບຕາມຈຳນວນລຳດັບບໍລິສັດທັງໝົດໃນໜ້າທຳອິດ
             </p>
           </div>
 
@@ -373,7 +396,7 @@ export const DashboardOverview: React.FC<Props> = ({ documents, rates }) => {
               {openedThisMonth} <span className="text-sm font-normal text-slate-500">ບໍລິສັດ</span>
             </div>
             <p className="text-[11px] text-slate-400">
-              ວຽກເປີດໃໝ່ປະຈຳເດືອນປັດຈຸບັນ
+              ບໍລິສັດທີ່ເປີດວຽກໃໝ່ປະຈຳເດືອນ ({currentMonth + 1}/{currentYear})
             </p>
           </div>
 

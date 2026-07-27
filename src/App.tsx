@@ -15,6 +15,7 @@ import { DashboardOverview } from './components/DashboardOverview';
 import { SoftwareSummaryView } from './components/SoftwareSummaryView';
 import { AnalyticsGraphsView } from './components/AnalyticsGraphsView';
 import { ConsolidatedAllInOneView } from './components/ConsolidatedAllInOneView';
+import { DocumentAttachmentsView } from './components/DocumentAttachmentsView';
 
 export default function App() {
   // Main State
@@ -409,6 +410,23 @@ export default function App() {
             onEditDocument={(doc) => {
               setDocToEdit(doc);
               setIsFormModalOpen(true);
+            }}
+          />
+        )}
+
+        {/* PAGE 6: DOCUMENT ATTACHMENTS & DOWNLOADS */}
+        {activeTab === 6 && (
+          <DocumentAttachmentsView
+            documents={documents}
+            rates={rates}
+            onViewDetails={(doc) => {
+              setDocForDetail(doc);
+              setIsDetailModalOpen(true);
+            }}
+            onUpdateDocument={(updatedDoc) => {
+              setDocuments((prev) =>
+                prev.map((d) => (d.id === updatedDoc.id ? updatedDoc : d))
+              );
             }}
           />
         )}

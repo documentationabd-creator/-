@@ -103,6 +103,22 @@ export const ConsolidatedAllInOneView: React.FC<Props> = ({
     });
   }, [documents, lineFilter, statusFilter, paymentFilter, urgencyFilter, companyTypeFilter, stepFilter, searchQuery]);
 
+  // Format multi-currency values directly without applying exchange rates
+  const formatDirectMultiCurrency = (
+    val?: { lak?: number; usd?: number; cny?: number; otherValue?: number; otherCurrencyName?: string }
+  ): string => {
+    if (!val) return '0 LAK';
+    const parts: string[] = [];
+    if (val.lak !== undefined && val.lak !== 0) parts.push(formatCurrencyLAK(val.lak));
+    if (val.usd !== undefined && val.usd !== 0) parts.push(formatCurrencyUSD(val.usd));
+    if (val.cny !== undefined && val.cny !== 0) parts.push(formatCurrencyCNY(val.cny));
+    if (val.otherValue !== undefined && val.otherValue !== 0) {
+      parts.push(`${val.otherValue.toLocaleString()} ${val.otherCurrencyName || 'ອື່ນໆ'}`);
+    }
+    if (parts.length === 0) return '0 LAK';
+    return parts.join(' + ');
+  };
+
   // Financial calculations helper for a single document
   const calculateDocFinancials = (doc: DocumentRecord) => {
     // 1. Revenue (ລາຍຮັບ)
@@ -596,44 +612,93 @@ export const ConsolidatedAllInOneView: React.FC<Props> = ({
                 <th colSpan={2} className="px-3 py-2 border-r border-slate-200 dark:border-slate-700 text-center">
                   3. ໂປຣແກຣມ & ຂັ້ນຕອນ
                 </th>
-                <th colSpan={4} className="px-3 py-2 border-r border-slate-200 dark:border-slate-700 text-center bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300">
+                <th colSpan={11} className="px-3 py-2 border-r border-slate-200 dark:border-slate-700 text-center bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300">
                   4. ລາຍຮັບ (INCOME & REVENUE)
                 </th>
-                <th colSpan={5} className="px-3 py-2 border-r border-slate-200 dark:border-slate-700 text-center bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300">
+                <th colSpan={7} className="px-3 py-2 border-r border-slate-200 dark:border-slate-700 text-center bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300">
                   5. ລາຍຈ່າຍ (EXPENSES)
                 </th>
-                <th colSpan={2} className="px-3 py-2 text-center bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300">
-                  6. ກຳໄລ/ລາຍຮັບສຸດທິ & ຈັດການ
+                <th colSpan={4} className="px-3 py-2 border-r border-slate-200 dark:border-slate-700 text-center bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300">
+                  6. ກຳໄລສຸດທິ (NET PROFIT)
+                </th>
+                <th colSpan={1} className="px-3 py-2 text-center bg-slate-100 dark:bg-slate-800">
+                  ຈັດການ
                 </th>
               </tr>
 
+              {/* Sub-Group Header Row */}
+              <tr className="bg-slate-50 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-extrabold text-[10px]">
+                <th colSpan={2} className="px-2 py-1.5 border-r border-slate-200 dark:border-slate-700 text-center">ບໍລິສັດ / ສາຍງານ</th>
+                <th colSpan={2} className="px-2 py-1.5 border-r border-slate-200 dark:border-slate-700 text-center">ດຳເນີນງານ & ວັນທີ</th>
+                <th colSpan={2} className="px-2 py-1.5 border-r border-slate-200 dark:border-slate-700 text-center">ໂປຣແກຣມ & ຂັ້ນຕອນ</th>
+                
+                {/* Income Subgroups */}
+                <th colSpan={4} className="px-2 py-1.5 border-r border-slate-200 dark:border-slate-700 text-center bg-emerald-100/50 dark:bg-emerald-950/60 text-emerald-900 dark:text-emerald-200">4.1 ມູນຄ່າລວມ (4 ສະກຸນເງິນ)</th>
+                <th colSpan={3} className="px-2 py-1.5 border-r border-slate-200 dark:border-slate-700 text-center bg-teal-100/50 dark:bg-teal-950/60 text-teal-900 dark:text-teal-200">4.2 ຮັບຊຳລະແລ້ວ (3 ສະກຸນເງິນ)</th>
+                <th colSpan={3} className="px-2 py-1.5 border-r border-slate-200 dark:border-slate-700 text-center bg-amber-100/50 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200">4.3 ຍອດຄ້າງຊຳລະ (3 ສະກຸນເງິນ)</th>
+                <th colSpan={1} className="px-2 py-1.5 border-r border-slate-200 dark:border-slate-700 text-center bg-emerald-100/50 dark:bg-emerald-950/60 text-emerald-900 dark:text-emerald-200">4.4 ສະຖານະ</th>
+
+                {/* Expense Subgroups */}
+                <th colSpan={2} className="px-2 py-1.5 border-r border-slate-200 dark:border-slate-700 text-center bg-rose-100/50 dark:bg-rose-950/60 text-rose-900 dark:text-rose-200">5.1 ຄ່າຕິດຕັ້ງ</th>
+                <th colSpan={3} className="px-2 py-1.5 border-r border-slate-200 dark:border-slate-700 text-center bg-rose-100/50 dark:bg-rose-950/60 text-rose-900 dark:text-rose-200">5.2 ຄ່າບໍລິຫານ/ເອກະສານ LAK</th>
+                <th colSpan={2} className="px-2 py-1.5 border-r border-slate-200 dark:border-slate-700 text-center bg-rose-200/60 dark:bg-rose-900/60 text-rose-950 dark:text-rose-100 font-black">5.3 ລວມລາຍຈ່າຍ</th>
+
+                {/* Net Profit Subgroups */}
+                <th colSpan={4} className="px-2 py-1.5 border-r border-slate-200 dark:border-slate-700 text-center bg-blue-100/60 dark:bg-blue-950/60 text-blue-900 dark:text-blue-200 font-black">6.1 ກຳໄລສຸດທິ (4 ສະກຸນເງິນ)</th>
+                
+                <th colSpan={1} className="px-2 py-1.5 text-center">ຈັດການ</th>
+              </tr>
+
               {/* Column Detail Row */}
-              <tr className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold text-[11px]">
-                <th className="px-3 py-2.5 w-10 text-center">#</th>
-                <th className="px-3 py-2.5 min-w-[180px]">ຊື່ບໍລິສັດ / TIN / ສາຍ</th>
+              <tr className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold text-[10px]">
+                <th className="px-2.5 py-2 w-10 text-center">#</th>
+                <th className="px-3 py-2 min-w-[170px]">ຊື່ບໍລິສັດ / TIN / ສາຍ</th>
                 
-                <th className="px-3 py-2.5 min-w-[120px]">ສະຖານະວຽກ</th>
-                <th className="px-3 py-2.5 min-w-[120px]">ວັນທີເປີດ-ໝົດອາຍຸ</th>
+                <th className="px-3 py-2 min-w-[110px]">ສະຖານະວຽກ</th>
+                <th className="px-3 py-2 min-w-[110px]">ວັນທີເປີດ-ໝົດອາຍຸ</th>
                 
-                <th className="px-3 py-2.5 min-w-[110px]">ໂປຣແກຣມ</th>
-                <th className="px-3 py-2.5 min-w-[110px]">4 ຂັ້ນຕອນ</th>
+                <th className="px-3 py-2 min-w-[100px]">ໂປຣແກຣມ</th>
+                <th className="px-3 py-2 min-w-[100px]">4 ຂັ້ນຕອນ</th>
                 
-                {/* Income Columns */}
-                <th className="px-3 py-2.5 min-w-[110px] text-right bg-emerald-50/50 dark:bg-emerald-950/20">ມູນຄ່າລວມ LAK</th>
-                <th className="px-3 py-2.5 min-w-[100px] text-right bg-emerald-50/50 dark:bg-emerald-950/20">ຮັບແລ້ວ LAK</th>
-                <th className="px-3 py-2.5 min-w-[100px] text-right bg-emerald-50/50 dark:bg-emerald-950/20">ຄ້າງຊຳລະ LAK</th>
-                <th className="px-3 py-2.5 min-w-[110px] text-center bg-emerald-50/50 dark:bg-emerald-950/20">ສະຖານະຊຳລະ</th>
+                {/* 4.1 Revenue breakdown */}
+                <th className="px-2.5 py-2 text-right bg-emerald-50/50 dark:bg-emerald-950/20 font-bold min-w-[95px]">LAK</th>
+                <th className="px-2.5 py-2 text-right bg-emerald-50/50 dark:bg-emerald-950/20 text-blue-700 dark:text-blue-400 font-bold min-w-[80px]">USD ($)</th>
+                <th className="px-2.5 py-2 text-right bg-emerald-50/50 dark:bg-emerald-950/20 text-rose-700 dark:text-rose-400 font-bold min-w-[80px]">CNY (¥)</th>
+                <th className="px-2.5 py-2 text-right bg-emerald-50/50 dark:bg-emerald-950/20 text-purple-700 dark:text-purple-400 font-bold min-w-[80px]">ອື່ນໆ</th>
                 
-                {/* Expense Columns */}
-                <th className="px-3 py-2.5 min-w-[90px] text-right bg-rose-50/50 dark:bg-rose-950/20">ຄ່າຕິດຕັ້ງ</th>
-                <th className="px-3 py-2.5 min-w-[90px] text-right bg-rose-50/50 dark:bg-rose-950/20">ຄ່າທຳນຽມ</th>
-                <th className="px-3 py-2.5 min-w-[90px] text-right bg-rose-50/50 dark:bg-rose-950/20">ຄ່າໃບອະນຸຍາດ</th>
-                <th className="px-3 py-2.5 min-w-[90px] text-right bg-rose-50/50 dark:bg-rose-950/20">ຄ່າຊ່ວຍເຫຼືອ</th>
-                <th className="px-3 py-2.5 min-w-[110px] text-right font-black bg-rose-100/60 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300">ລວມລາຍຈ່າຍ LAK</th>
+                {/* 4.2 Paid breakdown */}
+                <th className="px-2.5 py-2 text-right bg-teal-50/50 dark:bg-teal-950/20 text-teal-700 dark:text-teal-400 font-bold min-w-[95px]">LAK</th>
+                <th className="px-2.5 py-2 text-right bg-teal-50/50 dark:bg-teal-950/20 text-blue-700 dark:text-blue-400 font-bold min-w-[80px]">USD ($)</th>
+                <th className="px-2.5 py-2 text-right bg-teal-50/50 dark:bg-teal-950/20 text-rose-700 dark:text-rose-400 font-bold min-w-[80px]">CNY (¥)</th>
                 
-                {/* Net Profit Column */}
-                <th className="px-3 py-2.5 min-w-[120px] text-right font-black bg-blue-50 dark:bg-blue-950/50 text-blue-800 dark:text-blue-300">ກຳໄລສຸດທິ LAK</th>
-                <th className="px-3 py-2.5 w-16 text-center">ຈັດການ</th>
+                {/* 4.3 Outstanding breakdown */}
+                <th className="px-2.5 py-2 text-right bg-amber-50/50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400 font-bold min-w-[95px]">LAK</th>
+                <th className="px-2.5 py-2 text-right bg-amber-50/50 dark:bg-amber-950/20 text-blue-700 dark:text-blue-400 font-bold min-w-[80px]">USD ($)</th>
+                <th className="px-2.5 py-2 text-right bg-amber-50/50 dark:bg-amber-950/20 text-rose-700 dark:text-rose-400 font-bold min-w-[80px]">CNY (¥)</th>
+
+                {/* 4.4 Payment Status */}
+                <th className="px-2.5 py-2 text-center bg-emerald-50/50 dark:bg-emerald-950/20 min-w-[95px]">ສະຖານະຊຳລະ</th>
+                
+                {/* 5.1 Installation cost */}
+                <th className="px-2.5 py-2 text-right bg-rose-50/50 dark:bg-rose-950/20 min-w-[85px]">LAK</th>
+                <th className="px-2.5 py-2 text-right bg-rose-50/50 dark:bg-rose-950/20 text-blue-700 dark:text-blue-400 min-w-[75px]">USD ($)</th>
+
+                {/* 5.2 Processing fees */}
+                <th className="px-2.5 py-2 text-right bg-rose-50/50 dark:bg-rose-950/20 min-w-[85px]">ຄ່າທຳນຽມ</th>
+                <th className="px-2.5 py-2 text-right bg-rose-50/50 dark:bg-rose-950/20 min-w-[85px]">ຄ່າໃບອະນຸຍາດ</th>
+                <th className="px-2.5 py-2 text-right bg-rose-50/50 dark:bg-rose-950/20 min-w-[85px]">ຄ່າຊ່ວຍເຫຼືອ</th>
+
+                {/* 5.3 Total Expenses */}
+                <th className="px-2.5 py-2 text-right font-black bg-rose-100/60 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 min-w-[95px]">LAK</th>
+                <th className="px-2.5 py-2 text-right font-black bg-rose-100/60 dark:bg-rose-950/60 text-blue-700 dark:text-blue-300 min-w-[80px]">USD ($)</th>
+                
+                {/* 6.1 Net Profit breakdown */}
+                <th className="px-2.5 py-2 text-right font-black bg-blue-50 dark:bg-blue-950/50 text-blue-800 dark:text-blue-300 min-w-[95px]">LAK</th>
+                <th className="px-2.5 py-2 text-right font-black bg-blue-50 dark:bg-blue-950/50 text-blue-800 dark:text-blue-300 min-w-[80px]">USD ($)</th>
+                <th className="px-2.5 py-2 text-right font-black bg-blue-50 dark:bg-blue-950/50 text-rose-700 dark:text-rose-300 min-w-[80px]">CNY (¥)</th>
+                <th className="px-2.5 py-2 text-right font-black bg-blue-50 dark:bg-blue-950/50 text-purple-700 dark:text-purple-300 min-w-[80px]">ອື່ນໆ</th>
+
+                <th className="px-2.5 py-2 w-16 text-center">ຈັດການ</th>
               </tr>
             </thead>
 
@@ -641,13 +706,12 @@ export const ConsolidatedAllInOneView: React.FC<Props> = ({
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60">
               {filteredDocs.length === 0 ? (
                 <tr>
-                  <td colSpan={17} className="px-4 py-8 text-center text-slate-400 italic">
+                  <td colSpan={29} className="px-4 py-8 text-center text-slate-400 italic">
                     ບໍ່ພົບຂໍ້ມູນເອກະສານຕາມຕົວກັ່ນກອງ
                   </td>
                 </tr>
               ) : (
                 filteredDocs.map((doc, idx) => {
-                  const fin = calculateDocFinancials(doc);
                   const urgencyObj = getUrgencyLabel(doc.urgency);
                   const statusObj = getOperationStatusLabel(doc.operationStatus);
                   const paymentObj = getPaymentStatusLabel(doc.customerPayment.paymentStatus);
@@ -661,6 +725,34 @@ export const ConsolidatedAllInOneView: React.FC<Props> = ({
 
                   const isUrgent = doc.urgency === 'URGENT';
 
+                  // Financial values
+                  const revLAK = doc.totalValue?.lak || 0;
+                  const revUSD = doc.totalValue?.usd || 0;
+                  const revCNY = doc.totalValue?.cny || 0;
+                  const revOther = doc.totalValue?.otherValue || 0;
+
+                  const paidLAK = doc.customerPayment?.paidAmount?.lak || 0;
+                  const paidUSD = doc.customerPayment?.paidAmount?.usd || 0;
+                  const paidCNY = doc.customerPayment?.paidAmount?.cny || 0;
+
+                  const outLAK = doc.customerPayment?.outstandingBalance?.lak || 0;
+                  const outUSD = doc.customerPayment?.outstandingBalance?.usd || 0;
+                  const outCNY = doc.customerPayment?.outstandingBalance?.cny || 0;
+
+                  const installLAK = doc.installationExpense?.lakCost || 0;
+                  const installUSD = doc.installationExpense?.usdCost || 0;
+                  const feeLAK = doc.documentProcessingExpense?.feeCostLAK || 0;
+                  const urgentLAK = doc.documentProcessingExpense?.urgentLicenseFeeLAK || 0;
+                  const supportLAK = doc.documentProcessingExpense?.supportFeeLAK || 0;
+
+                  const totalExpLAK = installLAK + feeLAK + urgentLAK + supportLAK;
+                  const totalExpUSD = installUSD;
+
+                  const netLAK = revLAK - totalExpLAK;
+                  const netUSD = revUSD - totalExpUSD;
+                  const netCNY = revCNY;
+                  const netOther = revOther;
+
                   return (
                     <tr
                       key={doc.id}
@@ -671,14 +763,14 @@ export const ConsolidatedAllInOneView: React.FC<Props> = ({
                       }`}
                     >
                       {/* Seq */}
-                      <td className="px-3 py-2.5 text-center font-bold text-slate-400">
+                      <td className="px-2.5 py-2.5 text-center font-bold text-slate-400">
                         {idx + 1}
                       </td>
 
                       {/* Company Name & TIN */}
                       <td className="px-3 py-2.5 font-medium">
                         <div className="font-bold text-slate-900 dark:text-slate-100 flex items-center space-x-1">
-                          <span className="truncate max-w-[180px]">{doc.companyName}</span>
+                          <span className="truncate max-w-[170px]">{doc.companyName}</span>
                           {doc.isNewCompany && (
                             <span className="text-[9px] bg-emerald-100 text-emerald-700 font-bold px-1 rounded">
                               NEW
@@ -764,60 +856,92 @@ export const ConsolidatedAllInOneView: React.FC<Props> = ({
                         </div>
                       </td>
 
-                      {/* INCOME: Revenue LAK */}
-                      <td className="px-3 py-2.5 text-right font-bold text-slate-900 dark:text-slate-100 bg-emerald-50/30 dark:bg-emerald-950/10">
-                        {formatCurrencyLAK(fin.totalRevLAK)}
+                      {/* 4.1 REVENUE BREAKDOWN */}
+                      <td className="px-2.5 py-2.5 text-right font-bold text-slate-900 dark:text-slate-100 bg-emerald-50/30 dark:bg-emerald-950/10">
+                        {revLAK > 0 ? formatCurrencyLAK(revLAK) : '-'}
+                      </td>
+                      <td className="px-2.5 py-2.5 text-right font-bold text-blue-700 dark:text-blue-400 bg-emerald-50/30 dark:bg-emerald-950/10">
+                        {revUSD > 0 ? formatCurrencyUSD(revUSD) : '-'}
+                      </td>
+                      <td className="px-2.5 py-2.5 text-right font-bold text-rose-700 dark:text-rose-400 bg-emerald-50/30 dark:bg-emerald-950/10">
+                        {revCNY > 0 ? formatCurrencyCNY(revCNY) : '-'}
+                      </td>
+                      <td className="px-2.5 py-2.5 text-right font-bold text-purple-700 dark:text-purple-400 bg-emerald-50/30 dark:bg-emerald-950/10">
+                        {revOther > 0 ? `${revOther.toLocaleString()} ${doc.totalValue?.otherCurrencyName || ''}` : '-'}
                       </td>
 
-                      {/* INCOME: Paid LAK */}
-                      <td className="px-3 py-2.5 text-right font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50/30 dark:bg-emerald-950/10">
-                        {formatCurrencyLAK(fin.paidLAK)}
+                      {/* 4.2 PAID BREAKDOWN */}
+                      <td className="px-2.5 py-2.5 text-right font-semibold text-teal-700 dark:text-teal-300 bg-teal-50/20 dark:bg-teal-950/10">
+                        {paidLAK > 0 ? formatCurrencyLAK(paidLAK) : '-'}
+                      </td>
+                      <td className="px-2.5 py-2.5 text-right font-semibold text-blue-700 dark:text-blue-400 bg-teal-50/20 dark:bg-teal-950/10">
+                        {paidUSD > 0 ? formatCurrencyUSD(paidUSD) : '-'}
+                      </td>
+                      <td className="px-2.5 py-2.5 text-right font-semibold text-rose-700 dark:text-rose-400 bg-teal-50/20 dark:bg-teal-950/10">
+                        {paidCNY > 0 ? formatCurrencyCNY(paidCNY) : '-'}
                       </td>
 
-                      {/* INCOME: Outstanding Balance LAK */}
-                      <td className="px-3 py-2.5 text-right font-semibold text-amber-600 dark:text-amber-400 bg-emerald-50/30 dark:bg-emerald-950/10">
-                        {formatCurrencyLAK(fin.outstandingLAK)}
+                      {/* 4.3 OUTSTANDING BREAKDOWN */}
+                      <td className="px-2.5 py-2.5 text-right font-semibold text-amber-700 dark:text-amber-400 bg-amber-50/20 dark:bg-amber-950/10">
+                        {outLAK > 0 ? formatCurrencyLAK(outLAK) : '-'}
+                      </td>
+                      <td className="px-2.5 py-2.5 text-right font-semibold text-blue-700 dark:text-blue-400 bg-amber-50/20 dark:bg-amber-950/10">
+                        {outUSD > 0 ? formatCurrencyUSD(outUSD) : '-'}
+                      </td>
+                      <td className="px-2.5 py-2.5 text-right font-semibold text-rose-700 dark:text-rose-400 bg-amber-50/20 dark:bg-amber-950/10">
+                        {outCNY > 0 ? formatCurrencyCNY(outCNY) : '-'}
                       </td>
 
-                      {/* INCOME: Payment Status Badge */}
-                      <td className="px-3 py-2.5 text-center bg-emerald-50/30 dark:bg-emerald-950/10">
+                      {/* 4.4 Payment Status Badge */}
+                      <td className="px-2.5 py-2.5 text-center bg-emerald-50/30 dark:bg-emerald-950/10">
                         <span className={`inline-block text-[9px] font-bold px-1.5 py-0.5 rounded border ${paymentObj.bg} ${paymentObj.color}`}>
                           {paymentObj.label}
                         </span>
                       </td>
 
-                      {/* EXPENSES: Install Cost */}
-                      <td className="px-3 py-2.5 text-right text-rose-600 dark:text-rose-400 bg-rose-50/30 dark:bg-rose-950/10">
-                        {fin.installLAK > 0 ? formatCurrencyLAK(fin.installLAK) : '-'}
+                      {/* 5.1 INSTALLATION EXPENSES */}
+                      <td className="px-2.5 py-2.5 text-right text-rose-600 dark:text-rose-400 bg-rose-50/20 dark:bg-rose-950/10 font-semibold">
+                        {installLAK > 0 ? formatCurrencyLAK(installLAK) : '-'}
+                      </td>
+                      <td className="px-2.5 py-2.5 text-right text-blue-700 dark:text-blue-400 bg-rose-50/20 dark:bg-rose-950/10 font-semibold">
+                        {installUSD > 0 ? formatCurrencyUSD(installUSD) : '-'}
                       </td>
 
-                      {/* EXPENSES: Fee Cost */}
-                      <td className="px-3 py-2.5 text-right text-rose-600 dark:text-rose-400 bg-rose-50/30 dark:bg-rose-950/10">
-                        {fin.feeLAK > 0 ? formatCurrencyLAK(fin.feeLAK) : '-'}
+                      {/* 5.2 PROCESSING FEES */}
+                      <td className="px-2.5 py-2.5 text-right text-rose-600 dark:text-rose-400 bg-rose-50/20 dark:bg-rose-950/10">
+                        {feeLAK > 0 ? formatCurrencyLAK(feeLAK) : '-'}
+                      </td>
+                      <td className="px-2.5 py-2.5 text-right text-rose-600 dark:text-rose-400 bg-rose-50/20 dark:bg-rose-950/10">
+                        {urgentLAK > 0 ? formatCurrencyLAK(urgentLAK) : '-'}
+                      </td>
+                      <td className="px-2.5 py-2.5 text-right text-rose-600 dark:text-rose-400 bg-rose-50/20 dark:bg-rose-950/10">
+                        {supportLAK > 0 ? formatCurrencyLAK(supportLAK) : '-'}
                       </td>
 
-                      {/* EXPENSES: Urgent License Fee */}
-                      <td className="px-3 py-2.5 text-right text-rose-600 dark:text-rose-400 bg-rose-50/30 dark:bg-rose-950/10">
-                        {fin.urgentFeeLAK > 0 ? formatCurrencyLAK(fin.urgentFeeLAK) : '-'}
+                      {/* 5.3 TOTAL EXPENSES */}
+                      <td className="px-2.5 py-2.5 text-right font-extrabold text-rose-700 dark:text-rose-300 bg-rose-100/40 dark:bg-rose-950/40">
+                        {totalExpLAK > 0 ? formatCurrencyLAK(totalExpLAK) : '-'}
+                      </td>
+                      <td className="px-2.5 py-2.5 text-right font-extrabold text-blue-700 dark:text-blue-300 bg-rose-100/40 dark:bg-rose-950/40">
+                        {totalExpUSD > 0 ? formatCurrencyUSD(totalExpUSD) : '-'}
                       </td>
 
-                      {/* EXPENSES: Support Fee */}
-                      <td className="px-3 py-2.5 text-right text-rose-600 dark:text-rose-400 bg-rose-50/30 dark:bg-rose-950/10">
-                        {fin.supportFeeLAK > 0 ? formatCurrencyLAK(fin.supportFeeLAK) : '-'}
+                      {/* 6.1 NET PROFIT BREAKDOWN */}
+                      <td className={`px-2.5 py-2.5 text-right font-black bg-blue-50/60 dark:bg-blue-950/40 ${netLAK >= 0 ? 'text-blue-700 dark:text-blue-300' : 'text-rose-600 dark:text-rose-400'}`}>
+                        {formatCurrencyLAK(netLAK)}
                       </td>
-
-                      {/* EXPENSES: Total Expense LAK */}
-                      <td className="px-3 py-2.5 text-right font-extrabold text-rose-700 dark:text-rose-300 bg-rose-100/40 dark:bg-rose-950/40">
-                        {formatCurrencyLAK(fin.totalExpenseLAK)}
+                      <td className={`px-2.5 py-2.5 text-right font-black bg-blue-50/60 dark:bg-blue-950/40 ${netUSD >= 0 ? 'text-blue-700 dark:text-blue-300' : 'text-rose-600 dark:text-rose-400'}`}>
+                        {netUSD !== 0 ? formatCurrencyUSD(netUSD) : '-'}
                       </td>
-
-                      {/* NET PROFIT LAK */}
-                      <td className={`px-3 py-2.5 text-right font-black bg-blue-50/60 dark:bg-blue-950/40 ${fin.netProfitLAK >= 0 ? 'text-blue-700 dark:text-blue-300' : 'text-rose-600 dark:text-rose-400'}`}>
-                        {formatCurrencyLAK(fin.netProfitLAK)}
+                      <td className="px-2.5 py-2.5 text-right font-black bg-blue-50/60 dark:bg-blue-950/40 text-rose-700 dark:text-rose-300">
+                        {netCNY !== 0 ? formatCurrencyCNY(netCNY) : '-'}
+                      </td>
+                      <td className="px-2.5 py-2.5 text-right font-black bg-blue-50/60 dark:bg-blue-950/40 text-purple-700 dark:text-purple-300">
+                        {netOther !== 0 ? netOther.toLocaleString() : '-'}
                       </td>
 
                       {/* Actions */}
-                      <td className="px-3 py-2.5 text-center">
+                      <td className="px-2.5 py-2.5 text-center">
                         <div className="flex items-center justify-center space-x-1">
                           <button
                             onClick={() => onViewDetails(doc)}
@@ -850,58 +974,85 @@ export const ConsolidatedAllInOneView: React.FC<Props> = ({
                     ລວມຍອດທັງໝົດ ({filteredDocs.length} ບໍລິສັດ):
                   </td>
                   
-                  {/* Income Totals */}
-                  <td className="px-3 py-3 text-right bg-emerald-100/60 dark:bg-emerald-950/60">
-                    <div className="text-emerald-700 dark:text-emerald-300 font-extrabold">{formatCurrencyLAK(aggregates.totalRevenue)}</div>
-                    <div className="text-[10px] text-emerald-800/80 dark:text-emerald-400 font-normal leading-tight mt-0.5">
-                      {formatCurrencyLAK(aggregates.revenue.lak)} + {formatCurrencyUSD(aggregates.revenue.usd)} + {formatCurrencyCNY(aggregates.revenue.cny)}
-                    </div>
+                  {/* Revenue Totals */}
+                  <td className="px-2.5 py-3 text-right bg-emerald-100/60 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-200 font-black">
+                    {formatCurrencyLAK(aggregates.revenue.lak)}
                   </td>
-                  <td className="px-3 py-3 text-right bg-emerald-100/60 dark:bg-emerald-950/60">
-                    <div className="text-teal-700 dark:text-teal-300 font-extrabold">{formatCurrencyLAK(aggregates.totalPaid)}</div>
-                    <div className="text-[10px] text-teal-800/80 dark:text-teal-400 font-normal leading-tight mt-0.5">
-                      {formatCurrencyLAK(aggregates.paid.lak)} + {formatCurrencyUSD(aggregates.paid.usd)} + {formatCurrencyCNY(aggregates.paid.cny)}
-                    </div>
+                  <td className="px-2.5 py-3 text-right bg-emerald-100/60 dark:bg-emerald-950/60 text-blue-800 dark:text-blue-300 font-black">
+                    {formatCurrencyUSD(aggregates.revenue.usd)}
                   </td>
-                  <td className="px-3 py-3 text-right bg-emerald-100/60 dark:bg-emerald-950/60">
-                    <div className="text-amber-700 dark:text-amber-300 font-extrabold">{formatCurrencyLAK(aggregates.totalOutstanding)}</div>
-                    <div className="text-[10px] text-amber-800/80 dark:text-amber-400 font-normal leading-tight mt-0.5">
-                      {formatCurrencyLAK(aggregates.outstanding.lak)} + {formatCurrencyUSD(aggregates.outstanding.usd)} + {formatCurrencyCNY(aggregates.outstanding.cny)}
-                    </div>
+                  <td className="px-2.5 py-3 text-right bg-emerald-100/60 dark:bg-emerald-950/60 text-rose-800 dark:text-rose-300 font-black">
+                    {formatCurrencyCNY(aggregates.revenue.cny)}
                   </td>
-                  <td className="px-3 py-3 bg-emerald-100/60 dark:bg-emerald-950/60"></td>
+                  <td className="px-2.5 py-3 text-right bg-emerald-100/60 dark:bg-emerald-950/60 text-purple-800 dark:text-purple-300 font-black">
+                    {aggregates.revenue.other ? aggregates.revenue.other.toLocaleString() : '-'}
+                  </td>
+
+                  {/* Paid Totals */}
+                  <td className="px-2.5 py-3 text-right bg-teal-100/60 dark:bg-teal-950/60 text-teal-800 dark:text-teal-200 font-black">
+                    {formatCurrencyLAK(aggregates.paid.lak)}
+                  </td>
+                  <td className="px-2.5 py-3 text-right bg-teal-100/60 dark:bg-teal-950/60 text-blue-800 dark:text-blue-300 font-black">
+                    {formatCurrencyUSD(aggregates.paid.usd)}
+                  </td>
+                  <td className="px-2.5 py-3 text-right bg-teal-100/60 dark:bg-teal-950/60 text-rose-800 dark:text-rose-300 font-black">
+                    {formatCurrencyCNY(aggregates.paid.cny)}
+                  </td>
+
+                  {/* Outstanding Totals */}
+                  <td className="px-2.5 py-3 text-right bg-amber-100/60 dark:bg-amber-950/60 text-amber-800 dark:text-amber-200 font-black">
+                    {formatCurrencyLAK(aggregates.outstanding.lak)}
+                  </td>
+                  <td className="px-2.5 py-3 text-right bg-amber-100/60 dark:bg-amber-950/60 text-blue-800 dark:text-blue-300 font-black">
+                    {formatCurrencyUSD(aggregates.outstanding.usd)}
+                  </td>
+                  <td className="px-2.5 py-3 text-right bg-amber-100/60 dark:bg-amber-950/60 text-rose-800 dark:text-rose-300 font-black">
+                    {formatCurrencyCNY(aggregates.outstanding.cny)}
+                  </td>
+
+                  {/* Status column empty in footer */}
+                  <td className="px-2 py-3 bg-emerald-100/60 dark:bg-emerald-950/60"></td>
 
                   {/* Expense Breakdown Totals */}
-                  <td className="px-3 py-3 text-right text-rose-700 dark:text-rose-300 bg-rose-100/60 dark:bg-rose-950/60">
-                    {formatCurrencyLAK(aggregates.totalInstallExp)}
+                  <td className="px-2.5 py-3 text-right text-rose-700 dark:text-rose-300 bg-rose-100/60 dark:bg-rose-950/60 font-black">
+                    {formatCurrencyLAK(aggregates.expenses.installLAK)}
                   </td>
-                  <td className="px-3 py-3 text-right text-rose-700 dark:text-rose-300 bg-rose-100/60 dark:bg-rose-950/60">
-                    {formatCurrencyLAK(aggregates.totalFeeExp)}
+                  <td className="px-2.5 py-3 text-right text-blue-700 dark:text-blue-300 bg-rose-100/60 dark:bg-rose-950/60 font-black">
+                    {formatCurrencyUSD(aggregates.expenses.installUSD)}
                   </td>
-                  <td className="px-3 py-3 text-right text-rose-700 dark:text-rose-300 bg-rose-100/60 dark:bg-rose-950/60">
-                    {formatCurrencyLAK(aggregates.totalUrgentExp)}
+                  <td className="px-2.5 py-3 text-right text-rose-700 dark:text-rose-300 bg-rose-100/60 dark:bg-rose-950/60 font-black">
+                    {formatCurrencyLAK(aggregates.expenses.feeLAK)}
                   </td>
-                  <td className="px-3 py-3 text-right text-rose-700 dark:text-rose-300 bg-rose-100/60 dark:bg-rose-950/60">
-                    {formatCurrencyLAK(aggregates.totalSupportExp)}
+                  <td className="px-2.5 py-3 text-right text-rose-700 dark:text-rose-300 bg-rose-100/60 dark:bg-rose-950/60 font-black">
+                    {formatCurrencyLAK(aggregates.expenses.urgentLAK)}
                   </td>
-                  <td className="px-3 py-3 text-right bg-rose-200/80 dark:bg-rose-900/80 text-sm">
-                    <div className="text-rose-800 dark:text-rose-200 font-extrabold">{formatCurrencyLAK(aggregates.totalExpenses)}</div>
-                    <div className="text-[10px] text-rose-900/80 dark:text-rose-300 font-normal leading-tight mt-0.5">
-                      {formatCurrencyLAK(aggregates.expenses.lak)} + {formatCurrencyUSD(aggregates.expenses.usd)}
-                    </div>
+                  <td className="px-2.5 py-3 text-right text-rose-700 dark:text-rose-300 bg-rose-100/60 dark:bg-rose-950/60 font-black">
+                    {formatCurrencyLAK(aggregates.expenses.supportLAK)}
                   </td>
 
-                  {/* Grand Net Profit */}
-                  <td className={`px-3 py-3 text-right text-sm bg-blue-100/80 dark:bg-blue-950/80`}>
-                    <div className={`font-extrabold ${aggregates.totalNetProfit >= 0 ? 'text-blue-800 dark:text-blue-300' : 'text-rose-600 dark:text-rose-400'}`}>
-                      {formatCurrencyLAK(aggregates.totalNetProfit)}
-                    </div>
-                    <div className="text-[10px] text-blue-900/80 dark:text-blue-300 font-normal leading-tight mt-0.5">
-                      {formatCurrencyLAK(aggregates.netProfit.lak)} + {formatCurrencyUSD(aggregates.netProfit.usd)} + {formatCurrencyCNY(aggregates.netProfit.cny)}
-                    </div>
+                  {/* Total Expense LAK & USD */}
+                  <td className="px-2.5 py-3 text-right bg-rose-200/80 dark:bg-rose-900/80 text-rose-900 dark:text-rose-100 font-black">
+                    {formatCurrencyLAK(aggregates.expenses.totalLAK)}
+                  </td>
+                  <td className="px-2.5 py-3 text-right bg-rose-200/80 dark:bg-rose-900/80 text-blue-900 dark:text-blue-100 font-black">
+                    {formatCurrencyUSD(aggregates.expenses.totalUSD)}
                   </td>
 
-                  <td className="px-3 py-3"></td>
+                  {/* Grand Net Profit Breakdown */}
+                  <td className={`px-2.5 py-3 text-right bg-blue-100/80 dark:bg-blue-950/80 font-black ${aggregates.netProfit.lak >= 0 ? 'text-blue-900 dark:text-blue-200' : 'text-rose-600 dark:text-rose-400'}`}>
+                    {formatCurrencyLAK(aggregates.netProfit.lak)}
+                  </td>
+                  <td className={`px-2.5 py-3 text-right bg-blue-100/80 dark:bg-blue-950/80 font-black ${aggregates.netProfit.usd >= 0 ? 'text-blue-900 dark:text-blue-200' : 'text-rose-600 dark:text-rose-400'}`}>
+                    {formatCurrencyUSD(aggregates.netProfit.usd)}
+                  </td>
+                  <td className="px-2.5 py-3 text-right bg-blue-100/80 dark:bg-blue-950/80 text-rose-800 dark:text-rose-300 font-black">
+                    {formatCurrencyCNY(aggregates.netProfit.cny)}
+                  </td>
+                  <td className="px-2.5 py-3 text-right bg-blue-100/80 dark:bg-blue-950/80 text-purple-800 dark:text-purple-300 font-black">
+                    {aggregates.netProfit.other ? aggregates.netProfit.other.toLocaleString() : '-'}
+                  </td>
+
+                  <td className="px-2 py-3"></td>
                 </tr>
               </tfoot>
             )}
@@ -912,10 +1063,7 @@ export const ConsolidatedAllInOneView: React.FC<Props> = ({
         {/* Footer Note */}
         <div className="p-3 bg-slate-50 dark:bg-slate-900/60 border-t border-slate-100 dark:border-slate-700/80 text-[11px] text-slate-500 dark:text-slate-400 flex flex-col sm:flex-row justify-between items-center gap-2">
           <span>
-            💡 <strong>ໝາຍເຫດ:</strong> ຂໍ້ມູນທັງໝົດໃນຕາຕະລາງນີ້ຖືກຄິດໄລ່ປ່ຽນເປັນສະກຸນເງິນກີບ (LAK) ຕາມອັດຕາແລກປ່ຽນປະຈຳມື້ auto-conversion.
-          </span>
-          <span className="font-semibold text-slate-600 dark:text-slate-300">
-            ອັດຕາແລກປ່ຽນ: $1 = {formatCurrencyLAK(rates.USD_TO_LAK)} | ¥1 = {formatCurrencyLAK(rates.CNY_TO_LAK)}
+            💡 <strong>ໝາຍເຫດ:</strong> ຂໍ້ມູນການເງິນທຸກຢ່າງໃນຕາຕະລາງນີ້ຖືກແຍກສະແດງຕາມ 29 ຄໍລຳຈະແຈ້ງ ສຳລັບ 4 ສະກຸນເງິນ (LAK, USD, CNY, ອື່ນໆ) ໂດຍບໍ່ໄດ້ເອົາທຸກສະກຸນເງິນໄປລວມໃນຊ່ອງດຽວກັນ.
           </span>
         </div>
 

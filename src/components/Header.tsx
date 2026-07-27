@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Building2, LayoutDashboard, Laptop, BarChart3, Bell, RefreshCw, Plus, FileSpreadsheet, RotateCcw, DollarSign, Coins, Table } from 'lucide-react';
+import { Building2, LayoutDashboard, Laptop, BarChart3, Bell, RefreshCw, Plus, FileSpreadsheet, RotateCcw, DollarSign, Coins, Table, FolderDown } from 'lucide-react';
 import { DocumentRecord, ExchangeRates } from '../types/document';
 import { formatCurrencyLAK } from '../utils/formatters';
 import { NotificationPopover } from './NotificationPopover';
@@ -186,6 +186,18 @@ export const Header: React.FC<Props> = ({
           >
             <Table className="w-4 h-4" />
             <span>ໜ້າທີ 5: ຕາຕະລາງລວມ & ລາຍຮັບ-ລາຍຈ່າຍ</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab(6)}
+            className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl transition whitespace-nowrap ${
+              activeTab === 6
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/60'
+            }`}
+          >
+            <FolderDown className="w-4 h-4" />
+            <span>ໜ້າທີ 6: ຄັງເກັບໄຟລ໌ແນບ & ດາວໂຫຼດ</span>
           </button>
         </div>
 

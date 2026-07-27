@@ -194,6 +194,8 @@ export interface DocumentRecord {
   
   // Section 35: Database sync & Audit History
   masterDatabaseSync: boolean;
+  documentExchangeRates?: ExchangeRates;
+  generalRemarks?: string;
   auditTrail: AuditLogEntry[];
   createdAt: string;
   updatedAt: string;
