@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { DollarSign, Clock, Building2, Calendar, AlertTriangle, CheckCircle2, FileCheck, Send, Eye, ShieldCheck, Printer, ArrowUpRight, TrendingUp, RefreshCw, BarChart3 } from 'lucide-react';
+import { DollarSign, Clock, Building2, Calendar, AlertTriangle, CheckCircle2, FileCheck, Send, Eye, ShieldCheck, Printer, ArrowUpRight, TrendingUp, RefreshCw, BarChart3, Users, UserCheck, Briefcase } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList } from 'recharts';
 import { DocumentRecord, ExchangeRates, TimeframeType } from '../types/document';
 import { convertToTotalLAK, formatCurrencyLAK, formatCurrencyUSD, formatCurrencyCNY } from '../utils/formatters';
@@ -153,6 +153,43 @@ export const DashboardOverview: React.FC<Props> = ({ documents, rates }) => {
 
   // 10. Total Completed (Real Time)
   const totalCompleted = documents.filter((doc) => doc.isCompleted || doc.operationStatus === 'COMPLETED').length;
+
+  // 11. Coordinator Statistics Breakdown
+  const coordinatorMap: {
+    [name: string]: {
+      name: string;
+      total: number;
+      completed: number;
+      pending: number;
+      urgent: number;
+    };
+  } = {};
+
+  documents.forEach((doc) => {
+    const rawName = doc.coordinatorName ? doc.coordinatorName.trim() : '';
+    const coordName = rawName || 'ບໍ່ລະບຸຜູ້ປະສານງານ';
+    if (!coordinatorMap[coordName]) {
+      coordinatorMap[coordName] = {
+        name: coordName,
+        total: 0,
+        completed: 0,
+        pending: 0,
+        urgent: 0,
+      };
+    }
+    const isComp = doc.isCompleted || doc.operationStatus === 'COMPLETED';
+    coordinatorMap[coordName].total += 1;
+    if (isComp) {
+      coordinatorMap[coordName].completed += 1;
+    } else {
+      coordinatorMap[coordName].pending += 1;
+    }
+    if (doc.urgency === 'URGENT') {
+      coordinatorMap[coordName].urgent += 1;
+    }
+  });
+
+  const coordinatorStatsList = Object.values(coordinatorMap).sort((a, b) => b.total - a.total);
 
   return (
     <div className="space-y-6">
@@ -716,6 +753,108 @@ export const DashboardOverview: React.FC<Props> = ({ documents, rates }) => {
               </span>
             </div>
 
+          </div>
+        </div>
+
+        {/* Coordinator Statistics Breakdown Card */}
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-700 pb-3">
+            <div className="flex items-center space-x-2">
+              <div className="p-2 bg-purple-100 text-purple-600 dark:bg-purple-950/60 dark:text-purple-400 rounded-xl">
+                <Users className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center space-x-2">
+                  <h3 className="font-bold text-slate-800 dark:text-slate-100 text-base">
+                    ສະຖິຕິວຽກງານແຍກຕາມຜູ້ປະສານງານ (Coordinator Workload)
+                  </h3>
+                  <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800 dark:bg-purple-950/80 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-purple-500"></span>
+                    </span>
+                    <span>Real-Time Live</span>
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400">
+                  ສະແດງຈຳນວນເອກະສານທີ່ຮັບຜິດຊອບ, ວຽກທີ່ສຳເລັດ, ວຽກທີ່ຍັງຄ້າງ ແລະ ວຽກດ່ວນຂອງແຕ່ລະຄົນ
+                </p>
+              </div>
+            </div>
+            <span className="px-3 py-1 bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 font-extrabold text-xs rounded-full border border-purple-200 dark:border-purple-800 self-start sm:self-auto">
+              ລວມຜູ້ປະສານງານ: {coordinatorStatsList.length} ທ່ານ
+            </span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300">
+              <thead className="bg-slate-50 dark:bg-slate-900/60 text-slate-500 dark:text-slate-400 uppercase text-[11px] font-bold border-b border-slate-200 dark:border-slate-700">
+                <tr>
+                  <th className="py-3 px-4">ຜູ້ປະສານງານ (Coordinator)</th>
+                  <th className="py-3 px-3 text-center">ເອກະສານທັງໝົດ</th>
+                  <th className="py-3 px-3 text-center">ສຳເລັດແລ້ວ</th>
+                  <th className="py-3 px-3 text-center">ຍັງຄ້າງ/ກຳລັງດຳເນີນ</th>
+                  <th className="py-3 px-3 text-center">ວຽກດ່ວນ</th>
+                  <th className="py-3 px-4">ຄວາມຄືບໜ້າ (Progress)</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60">
+                {coordinatorStatsList.map((item, index) => {
+                  const percent = item.total > 0 ? Math.round((item.completed / item.total) * 100) : 0;
+                  return (
+                    <tr key={`coord-stat-${index}`} className="hover:bg-slate-50/80 dark:hover:bg-slate-700/40 transition">
+                      <td className="py-3 px-4 font-bold text-slate-900 dark:text-slate-100 flex items-center space-x-2">
+                        <div className="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-extrabold text-xs shrink-0">
+                          {item.name.charAt(0) || 'U'}
+                        </div>
+                        <span className="truncate max-w-[200px] sm:max-w-[260px]">{item.name}</span>
+                      </td>
+                      <td className="py-3 px-3 text-center font-extrabold text-slate-800 dark:text-slate-200 text-sm">
+                        {item.total}
+                      </td>
+                      <td className="py-3 px-3 text-center">
+                        <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 font-bold rounded-full text-xs">
+                          {item.completed}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 text-center">
+                        <span className="px-2.5 py-1 bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 font-bold rounded-full text-xs">
+                          {item.pending}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 text-center">
+                        {item.urgent > 0 ? (
+                          <span className="px-2.5 py-1 bg-rose-500 text-white font-bold rounded-full text-xs animate-pulse">
+                            {item.urgent}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 font-medium">0</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 min-w-[140px]">
+                        <div className="flex items-center space-x-2">
+                          <div className="flex-1 bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full transition-all duration-500 rounded-full ${
+                                percent === 100
+                                  ? 'bg-emerald-500'
+                                  : percent > 50
+                                  ? 'bg-indigo-500'
+                                  : 'bg-amber-500'
+                              }`}
+                              style={{ width: `${percent}%` }}
+                            />
+                          </div>
+                          <span className="text-xs font-bold text-slate-700 dark:text-slate-300 w-9 text-right">
+                            {percent}%
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
 
