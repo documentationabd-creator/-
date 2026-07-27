@@ -11,7 +11,7 @@ interface Props {
 }
 
 export const DashboardOverview: React.FC<Props> = ({ documents, rates }) => {
-  const [timeframe, setTimeframe] = useState<TimeframeType>('1_MONTH');
+  const [timeframe, setTimeframe] = useState<TimeframeType>('ALL');
   const [lastUpdated, setLastUpdated] = useState<string>(() => new Date().toLocaleTimeString('lo-LA'));
 
   // Update timestamp on data change
@@ -21,6 +21,7 @@ export const DashboardOverview: React.FC<Props> = ({ documents, rates }) => {
 
   // Filter documents by selected timeframe
   const getFilteredDocuments = () => {
+    if (timeframe === 'ALL') return documents;
     const now = new Date();
     return documents.filter((doc) => {
       if (!doc.workOpenDate) return true;
@@ -222,6 +223,7 @@ export const DashboardOverview: React.FC<Props> = ({ documents, rates }) => {
         {/* Timeframe Pills */}
         <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold">
           {[
+            { key: 'ALL', label: 'ທັງໝົດ (Real-Time)' },
             { key: '1_WEEK', label: '1 ອາທິດ' },
             { key: '1_MONTH', label: '1 ເດືອນ' },
             { key: '3_MONTHS', label: '3 ເດືອນ' },

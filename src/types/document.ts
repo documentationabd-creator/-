@@ -15,7 +15,7 @@ export type PaymentStatusType =
 
 export type ReimbursementStatusType = 'REIMBURSED' | 'NOT_REIMBURSED';
 
-export type TimeframeType = '1_WEEK' | '1_MONTH' | '3_MONTHS' | '6_MONTHS' | 'YEAR_END';
+export type TimeframeType = 'ALL' | '1_WEEK' | '1_MONTH' | '3_MONTHS' | '6_MONTHS' | 'YEAR_END';
 
 export interface FileAttachment {
   name: string;
