@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MoreVertical, Eye, Edit, Copy, History, Trash2, CheckSquare, Square, MapPin, Laptop, ExternalLink, AlertTriangle, Building2, ArrowLeftRight } from 'lucide-react';
+import { MoreVertical, Eye, Edit, Copy, History, Trash2, CheckSquare, Square, MapPin, Laptop, ExternalLink, AlertTriangle, Building2, ArrowLeftRight, ArrowUpDown } from 'lucide-react';
 import { DocumentRecord, ExchangeRates } from '../types/document';
 import { formatDateDisplay, formatMultiCurrencySummary, getOperationStatusLabel, getPaymentStatusLabel, getUrgencyLabel } from '../utils/formatters';
 
@@ -101,13 +101,20 @@ export const DocumentListTable: React.FC<Props> = ({
     <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700 overflow-hidden">
       
       {/* Top Scrollbar Label Header */}
-      <div className="bg-slate-100/90 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-700 px-3.5 py-1.5 flex items-center justify-between text-[11px] text-slate-500">
-        <div className="flex items-center space-x-1.5 font-bold text-slate-700 dark:text-slate-300">
-          <ArrowLeftRight className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-          <span>ແຖບເລື່ອນຕາຕະລາງຢູ່ຫົວແຖວ (Top Scrollbar)</span>
+      <div className="bg-slate-100/90 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-700 px-3.5 py-1.5 flex flex-wrap items-center justify-between text-[11px] text-slate-500 gap-1.5">
+        <div className="flex items-center space-x-3 font-bold text-slate-700 dark:text-slate-300">
+          <div className="flex items-center space-x-1.5">
+            <ArrowLeftRight className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+            <span>ແຖບເລື່ອນຕາຕະລາງຢູ່ຫົວແຖວ (Top Scrollbar)</span>
+          </div>
+          <span className="text-slate-300 dark:text-slate-600">|</span>
+          <div className="flex items-center space-x-1.5 text-emerald-700 dark:text-emerald-400">
+            <ArrowUpDown className="w-3.5 h-3.5" />
+            <span>ແຖບເລື່ອນດ້ານຂ້າງ (Side Vertical Scrollbar)</span>
+          </div>
         </div>
         <span className="text-[10px] text-slate-400 hidden sm:inline">
-          ເລື່ອນຕາຕະລາງຊ້າຍ-ຂວາ ຢູ່ຫົວແຖວໄດ້ທັນທີ
+          ເລື່ອນຕາຕະລາງ ຊ້າຍ-ຂວາ & ຂຶ້ນ-ລົງ ດ້ານຂ້າງໄດ້ທັນທີ
         </span>
       </div>
 
@@ -121,16 +128,16 @@ export const DocumentListTable: React.FC<Props> = ({
         <div style={{ width: `${tableScrollWidth}px`, height: '1px' }} />
       </div>
 
-      {/* Main Bottom Table Scroll Container */}
+      {/* Main Bottom Table Scroll Container with Vertical Side Scrollbar */}
       <div
         ref={bottomScrollRef}
         onScroll={handleBottomScroll}
-        className="overflow-x-auto"
+        className="overflow-x-auto max-h-[680px] overflow-y-auto"
       >
         <table ref={tableRef} className="w-full text-left text-xs border-collapse">
           
-          {/* Table Header */}
-          <thead className="bg-slate-50 dark:bg-slate-900/60 text-slate-600 dark:text-slate-300 font-semibold uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
+          {/* Table Header Sticky for Vertical Scroll */}
+          <thead className="bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-bold uppercase tracking-wider border-b border-slate-200 dark:border-slate-700 sticky top-0 z-10 shadow-xs">
             <tr>
               <th className="py-3.5 px-3 text-center w-12">ລຳດັບ</th>
               <th className="py-3.5 px-4 min-w-[200px]">ລາຍຊື່ບໍລິສັດ / ສາຍ</th>
@@ -178,6 +185,11 @@ export const DocumentListTable: React.FC<Props> = ({
                       {doc.companyName}
                     </div>
                     <div className="flex flex-wrap items-center gap-1 mt-1 text-[11px]">
+                      {doc.taskType && (
+                        <span className="px-1.5 py-0.5 rounded bg-teal-100 text-teal-800 dark:bg-teal-950/80 dark:text-teal-300 font-bold border border-teal-200/80 dark:border-teal-800">
+                          {doc.taskType}
+                        </span>
+                      )}
                       <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-semibold">
                         ສາຍ: {doc.line || 'ບໍ່ມີສາຍ'}
                       </span>

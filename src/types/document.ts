@@ -60,6 +60,7 @@ export interface DocumentRecord {
   
   // Section 3: Line
   line: string; // A, B, C, D, E, ບໍ່ມີສາຍ, ຕ່າງແຂວງ, ກຸ່ມບໍລິສັດສືບສຸລິນຄຳ, custom
+  taskType?: string; // หน้าวェก: ติดตั้งโปรแกรม, ยื่นเข้าระบบอากร..., etc.
   
   // Section 4-8
   incomingNo: string;
@@ -216,4 +217,19 @@ export interface FilterState {
   companyType?: string; // 'ALL' | 'NEW_ONLY' | 'EXISTING_ONLY'
   workflowStep?: string; // 'ALL' | 'STAMPED' | 'UNSTAMPED' | 'ASSEMBLED' | 'UNASSEMBLED' | 'SUBMITTED' | 'UNSUBMITTED' | 'TRACKED' | 'UNTRACKED'
   searchQuery: string;
+  sortBy?: string; // 'SEQ_DESC' | 'SEQ_ASC' | 'NAME_ASC' | 'NAME_DESC' | 'DATE_DESC' | 'DATE_ASC'
 }
+
+export const TASK_OPTIONS = [
+  'ຕິດຕັ້ງໂປຣແກຣມ',
+  'ຍື່ນເຂົ້າລະບົບອາກອນມູນຄ່າເພີ່ມ',
+  'ໃບຢັ້ງຢືນຈົດຊັບສິນ',
+  'ຂໍໃບຕິດຕາມຖືບັນຊີໃໝ່',
+  'ຍື່ນເຂົ້າລະບົບ ປົກກະຕິ',
+  'ຍື່ນເຂົ້າລະບົບ ກໍລະນີເຄຍ',
+  'ໃບຢັ້ງຜູ້ນຳເຂົ້າ-ສົ່ງອອກ',
+  'ໃບຢັ້ງຢືນຄຸ້ມຄອງເງິນຕາ',
+  'ໃບຢັ້ງຢືນນຳທຶນເຂົ້າ',
+  'ໜ້າວຽກອື່ນໆ',
+] as const;
+

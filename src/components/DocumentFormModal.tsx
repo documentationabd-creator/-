@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Building2, FileText, Calendar, MapPin, Laptop, DollarSign, ShieldCheck, Check, AlertCircle, Plus, Upload, Trash2, Download, MessageSquare } from 'lucide-react';
-import { DocumentRecord, ExchangeRates, OperationStatusType, PaymentStatusType, ReimbursementStatusType, UrgencyType } from '../types/document';
+import { X, Save, Building2, FileText, Calendar, MapPin, Laptop, DollarSign, ShieldCheck, Check, AlertCircle, Plus, Upload, Trash2, Download, MessageSquare, Briefcase, CheckCircle2 } from 'lucide-react';
+import { DocumentRecord, ExchangeRates, OperationStatusType, PaymentStatusType, ReimbursementStatusType, UrgencyType, TASK_OPTIONS } from '../types/document';
 import { calculateDefaultExpiryDate, calculateProcessingDays, convertToTotalLAK, formatCurrencyLAK } from '../utils/formatters';
 import { downloadAttachmentFile } from '../utils/fileDownloadUtils';
 
@@ -37,6 +37,7 @@ export const DocumentFormModal: React.FC<Props> = ({
   // Local state initialized with empty or edit object
   const [formData, setFormData] = useState<Partial<DocumentRecord>>({});
   const [customLine, setCustomLine] = useState('');
+  const [customTaskType, setCustomTaskType] = useState('');
 
   useEffect(() => {
     if (documentToEdit) {
@@ -51,6 +52,9 @@ export const DocumentFormModal: React.FC<Props> = ({
       if (!LINE_OPTIONS.includes(documentToEdit.line || '')) {
         setCustomLine(documentToEdit.line || '');
       }
+      if (documentToEdit.taskType && !TASK_OPTIONS.includes(documentToEdit.taskType as any)) {
+        setCustomTaskType(documentToEdit.taskType);
+      }
     } else {
       // Create new document template
       const today = new Date().toISOString().split('T')[0];
@@ -60,6 +64,7 @@ export const DocumentFormModal: React.FC<Props> = ({
         isNewCompany: false,
         isContractRenewal: false,
         line: 'A',
+        taskType: 'ຕິດຕັ້ງໂປຣແກຣມ',
         documentExchangeRates: {
           USD_TO_LAK: rates?.USD_TO_LAK || 21800,
           CNY_TO_LAK: rates?.CNY_TO_LAK || 3050,
@@ -197,10 +202,14 @@ export const DocumentFormModal: React.FC<Props> = ({
     }
 
     const lineToSave = formData.line === 'OTHER' ? customLine : (formData.line || 'A');
+    const taskTypeToSave = formData.taskType === 'ໜ້າວຽກອື່ນໆ' 
+      ? (customTaskType.trim() ? customTaskType.trim() : 'ໜ້າວຽກອື່ນໆ') 
+      : (formData.taskType || 'ຕິດຕັ້ງໂປຣແກຣມ');
 
     onSave({
       ...formData,
       line: lineToSave,
+      taskType: taskTypeToSave,
     });
     onClose();
   };
@@ -435,6 +444,82 @@ export const DocumentFormModal: React.FC<Props> = ({
                       placeholder="ປ້ອນຊື່ສາຍວຽກ..."
                       className="w-full mt-2 px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-xs"
                     />
+                  )}
+                </div>
+              </div>
+
+              {/* ຕົວເລືອກໜ້າວຽກ (Task Type / Service Selection) */}
+              <div className="bg-slate-50 dark:bg-slate-900/60 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center space-x-1.5">
+                    <Briefcase className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <span>ເລືອກໜ້າວຽກ (Task Type) <span className="text-rose-500">*</span></span>
+                  </label>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
+                    ກົດເລືອກໜ້າວຽກ ຫຼື ເລືອກຈາກລາຍການ
+                  </span>
+                </div>
+
+                {/* Quick Task Chips / Buttons */}
+                <div className="flex flex-wrap gap-1.5">
+                  {TASK_OPTIONS.map((task) => {
+                    const isSelected = formData.taskType === task || (task === 'ໜ້າວຽກອື່ນໆ' && (formData.taskType === 'ໜ້າວຽກອື່ນໆ' || (formData.taskType && !TASK_OPTIONS.includes(formData.taskType as any))));
+                    return (
+                      <button
+                        key={task}
+                        type="button"
+                        onClick={() => {
+                          setFormData({ ...formData, taskType: task });
+                        }}
+                        className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5 border ${
+                          isSelected
+                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs ring-2 ring-emerald-300 dark:ring-emerald-800'
+                            : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-emerald-50 dark:hover:bg-slate-700'
+                        }`}
+                      >
+                        {isSelected ? (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                        ) : (
+                          <div className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600" />
+                        )}
+                        <span>{task}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Select Dropdown & Custom Input */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                  <div>
+                    <select
+                      value={
+                        TASK_OPTIONS.includes(formData.taskType as any)
+                          ? formData.taskType
+                          : (formData.taskType ? 'ໜ້າວຽກອື່ນໆ' : 'ຕິດຕັ້ງໂປຣແກຣມ')
+                      }
+                      onChange={(e) => {
+                        setFormData({ ...formData, taskType: e.target.value });
+                      }}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-xs font-semibold"
+                    >
+                      {TASK_OPTIONS.map((task) => (
+                        <option key={task} value={task}>
+                          {task}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {(formData.taskType === 'ໜ້າວຽກອື່ນໆ' || (formData.taskType && !TASK_OPTIONS.includes(formData.taskType as any))) && (
+                    <div>
+                      <input
+                        type="text"
+                        value={customTaskType}
+                        onChange={(e) => setCustomTaskType(e.target.value)}
+                        placeholder="ປ້ອນຊື່ໜ້າວຽກອື່ນໆ..."
+                        className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-xs"
+                      />
+                    </div>
                   )}
                 </div>
               </div>

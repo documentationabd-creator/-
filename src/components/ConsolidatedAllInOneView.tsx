@@ -17,7 +17,8 @@ import {
   ShieldCheck,
   AlertCircle,
   HelpCircle,
-  ArrowLeftRight
+  ArrowLeftRight,
+  ArrowUpDown
 } from 'lucide-react';
 import { DocumentRecord, ExchangeRates, UrgencyType, OperationStatusType, PaymentStatusType } from '../types/document';
 import {
@@ -654,13 +655,20 @@ export const ConsolidatedAllInOneView: React.FC<Props> = ({
       <div id="consolidated-master-table-container" className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-xs overflow-hidden">
         
         {/* Top Scrollbar Bar Header */}
-        <div className="bg-slate-100/90 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-700 px-3.5 py-1.5 flex items-center justify-between text-[11px] text-slate-500">
-          <div className="flex items-center space-x-1.5 font-bold text-slate-700 dark:text-slate-300">
-            <ArrowLeftRight className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-            <span>ແຖບເລື່ອນຕາຕະລາງຢູ່ຫົວແຖວ (Top Scrollbar)</span>
+        <div className="bg-slate-100/90 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-700 px-3.5 py-1.5 flex flex-wrap items-center justify-between text-[11px] text-slate-500 gap-1.5">
+          <div className="flex items-center space-x-3 font-bold text-slate-700 dark:text-slate-300">
+            <div className="flex items-center space-x-1.5">
+              <ArrowLeftRight className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+              <span>ແຖບເລື່ອນຕາຕະລາງຢູ່ຫົວແຖວ (Top Scrollbar)</span>
+            </div>
+            <span className="text-slate-300 dark:text-slate-600">|</span>
+            <div className="flex items-center space-x-1.5 text-emerald-700 dark:text-emerald-400">
+              <ArrowUpDown className="w-3.5 h-3.5" />
+              <span>ແຖບເລື່ອນດ້ານຂ້າງ (Side Vertical Scrollbar)</span>
+            </div>
           </div>
           <span className="text-[10px] text-slate-400 hidden sm:inline">
-            ເລື່ອນຕາຕະລາງຊ້າຍ-ຂວາ ຢູ່ຫົວແຖວໄດ້ທັນທີ
+            ເລື່ອນຕາຕະລາງ ຊ້າຍ-ຂວາ & ຂຶ້ນ-ລົງ ດ້ານຂ້າງໄດ້ທັນທີ
           </span>
         </div>
 
@@ -677,12 +685,12 @@ export const ConsolidatedAllInOneView: React.FC<Props> = ({
         <div
           ref={bottomScrollRef}
           onScroll={handleBottomScroll}
-          className="overflow-x-auto max-w-full"
+          className="overflow-x-auto max-h-[680px] overflow-y-auto max-w-full"
         >
           <table ref={masterTableRef} className="w-full text-left border-collapse text-xs">
             
-            {/* Table Header Row Groups */}
-            <thead>
+            {/* Table Header Row Groups (Sticky for Vertical Scroll) */}
+            <thead className="sticky top-0 z-10 bg-slate-100 dark:bg-slate-900 shadow-xs">
               {/* Category Group Row */}
               <tr className="bg-slate-100 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-extrabold uppercase text-[10px] tracking-wider">
                 <th colSpan={2} className="px-3 py-2 border-r border-slate-200 dark:border-slate-700 text-center">
@@ -859,7 +867,12 @@ export const ConsolidatedAllInOneView: React.FC<Props> = ({
                             </span>
                           )}
                         </div>
-                        <div className="text-[10px] text-slate-400 flex items-center space-x-2 mt-0.5">
+                        <div className="text-[10px] text-slate-400 flex flex-wrap items-center gap-1 mt-0.5">
+                          {doc.taskType && (
+                            <span className="bg-teal-100 text-teal-800 dark:bg-teal-950/80 dark:text-teal-300 px-1 rounded font-bold">
+                              {doc.taskType}
+                            </span>
+                          )}
                           <span>TIN: {doc.tinNo || '-'}</span>
                           <span className="bg-slate-100 dark:bg-slate-700 px-1 rounded font-semibold text-slate-600 dark:text-slate-300">
                             {doc.line || 'ບໍ່ມີສາຍ'}

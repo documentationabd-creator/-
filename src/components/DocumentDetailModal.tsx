@@ -124,6 +124,12 @@ export const DocumentDetailModal: React.FC<Props> = ({
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
+                <span className="text-xs text-slate-400 block">ໜ້າວຽກ (Task Type):</span>
+                <span className="inline-block font-bold text-xs px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                  {doc.taskType || 'ຕິດຕັ້ງໂປຣແກຣມ'}
+                </span>
+              </div>
+              <div>
                 <span className="text-xs text-slate-400 block">ສາຍ (Line):</span>
                 <span className="font-semibold text-slate-800 dark:text-slate-200">{doc.line || 'ບໍ່ມີສາຍ'}</span>
               </div>

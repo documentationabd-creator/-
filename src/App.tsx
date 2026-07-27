@@ -83,68 +83,89 @@ export default function App() {
     }
   }, [rates]);
 
-  // Filter Logic for Page 1 Document Table
-  const filteredDocuments = documents.filter((doc) => {
-    // 1. Line filter
-    if (filters.line !== 'ALL' && doc.line !== filters.line) return false;
+  // Filter & Sort Logic for Page 1 Document Table
+  const filteredDocuments = documents
+    .filter((doc) => {
+      // 1. Line filter
+      if (filters.line !== 'ALL' && doc.line !== filters.line) return false;
 
-    // 2. Urgency filter
-    if (filters.urgency !== 'ALL' && doc.urgency !== filters.urgency) return false;
+      // 2. Urgency filter
+      if (filters.urgency !== 'ALL' && doc.urgency !== filters.urgency) return false;
 
-    // 3. Status filter
-    if (filters.status !== 'ALL' && doc.operationStatus !== filters.status) return false;
+      // 3. Status filter
+      if (filters.status !== 'ALL' && doc.operationStatus !== filters.status) return false;
 
-    // 4. Payment status filter
-    if (filters.paymentStatus !== 'ALL' && doc.customerPayment.paymentStatus !== filters.paymentStatus) return false;
+      // 4. Payment status filter
+      if (filters.paymentStatus !== 'ALL' && doc.customerPayment.paymentStatus !== filters.paymentStatus) return false;
 
-    // 5. Software filter
-    if (filters.software !== 'ALL') {
-      const sw = doc.softwareInstallation;
-      if (filters.software === 'APIS' && !sw.apis) return false;
-      if (filters.software === 'TSD' && !sw.tsd) return false;
-      if (filters.software === 'PKT' && !sw.pkt) return false;
-      if (filters.software === 'RENEW_2026' && !sw.renew2026) return false;
-      if (filters.software === 'OTHER' && !sw.other) return false;
-    }
-
-    // 6. Renewal 2026 filter
-    if (filters.renewal2026Only && !doc.softwareInstallation.renew2026) return false;
-
-    // 7. Company Type filter (New company vs Existing)
-    if (filters.companyType && filters.companyType !== 'ALL') {
-      if (filters.companyType === 'NEW_ONLY' && !doc.isNewCompany) return false;
-      if (filters.companyType === 'EXISTING_ONLY' && doc.isNewCompany) return false;
-    }
-
-    // 8. Workflow Step filter (4 ຂັ້ນຕອນ: ຈ້ຳກາ, ປະກອບ, ຍື່ນ, ຕິດຕາມ)
-    if (filters.workflowStep && filters.workflowStep !== 'ALL') {
-      if (filters.workflowStep === 'STAMPED' && !doc.isStamped) return false;
-      if (filters.workflowStep === 'UNSTAMPED' && doc.isStamped) return false;
-      if (filters.workflowStep === 'ASSEMBLED' && !doc.isAssembled) return false;
-      if (filters.workflowStep === 'UNASSEMBLED' && doc.isAssembled) return false;
-      if (filters.workflowStep === 'SUBMITTED' && !doc.isSubmitted) return false;
-      if (filters.workflowStep === 'UNSUBMITTED' && doc.isSubmitted) return false;
-      if (filters.workflowStep === 'TRACKED' && !doc.isTracked) return false;
-      if (filters.workflowStep === 'UNTRACKED' && doc.isTracked) return false;
-    }
-
-    // 9. Search query filter across all fields
-    if (filters.searchQuery.trim()) {
-      const q = filters.searchQuery.toLowerCase().trim();
-      const matchName = doc.companyName.toLowerCase().includes(q);
-      const matchTin = doc.tinNo.toLowerCase().includes(q);
-      const matchIncoming = doc.incomingNo.toLowerCase().includes(q);
-      const matchCoord = doc.coordinatorName.toLowerCase().includes(q);
-      const matchLoc = doc.submissionLocation.toLowerCase().includes(q);
-      const matchSubIncoming = doc.submissionIncomingNo.toLowerCase().includes(q);
-
-      if (!matchName && !matchTin && !matchIncoming && !matchCoord && !matchLoc && !matchSubIncoming) {
-        return false;
+      // 5. Software filter
+      if (filters.software !== 'ALL') {
+        const sw = doc.softwareInstallation;
+        if (filters.software === 'APIS' && !sw.apis) return false;
+        if (filters.software === 'TSD' && !sw.tsd) return false;
+        if (filters.software === 'PKT' && !sw.pkt) return false;
+        if (filters.software === 'RENEW_2026' && !sw.renew2026) return false;
+        if (filters.software === 'OTHER' && !sw.other) return false;
       }
-    }
 
-    return true;
-  });
+      // 6. Renewal 2026 filter
+      if (filters.renewal2026Only && !doc.softwareInstallation.renew2026) return false;
+
+      // 7. Company Type filter (New company vs Existing)
+      if (filters.companyType && filters.companyType !== 'ALL') {
+        if (filters.companyType === 'NEW_ONLY' && !doc.isNewCompany) return false;
+        if (filters.companyType === 'EXISTING_ONLY' && doc.isNewCompany) return false;
+      }
+
+      // 8. Workflow Step filter (4 ຂັ້ນຕອນ: ຈ້ຳກາ, ປະກອບ, ຍື່ນ, ຕິດຕາມ)
+      if (filters.workflowStep && filters.workflowStep !== 'ALL') {
+        if (filters.workflowStep === 'STAMPED' && !doc.isStamped) return false;
+        if (filters.workflowStep === 'UNSTAMPED' && doc.isStamped) return false;
+        if (filters.workflowStep === 'ASSEMBLED' && !doc.isAssembled) return false;
+        if (filters.workflowStep === 'UNASSEMBLED' && doc.isAssembled) return false;
+        if (filters.workflowStep === 'SUBMITTED' && !doc.isSubmitted) return false;
+        if (filters.workflowStep === 'UNSUBMITTED' && doc.isSubmitted) return false;
+        if (filters.workflowStep === 'TRACKED' && !doc.isTracked) return false;
+        if (filters.workflowStep === 'UNTRACKED' && doc.isTracked) return false;
+      }
+
+      // 9. Search query filter across all fields
+      if (filters.searchQuery.trim()) {
+        const q = filters.searchQuery.toLowerCase().trim();
+        const matchName = doc.companyName.toLowerCase().includes(q);
+        const matchTin = doc.tinNo.toLowerCase().includes(q);
+        const matchIncoming = doc.incomingNo.toLowerCase().includes(q);
+        const matchCoord = doc.coordinatorName.toLowerCase().includes(q);
+        const matchLoc = doc.submissionLocation.toLowerCase().includes(q);
+        const matchSubIncoming = doc.submissionIncomingNo.toLowerCase().includes(q);
+
+        if (!matchName && !matchTin && !matchIncoming && !matchCoord && !matchLoc && !matchSubIncoming) {
+          return false;
+        }
+      }
+
+      return true;
+    })
+    .sort((a, b) => {
+      const sort = filters.sortBy || 'SEQ_DESC';
+      if (sort === 'SEQ_ASC') {
+        return (a.seq ?? 0) - (b.seq ?? 0);
+      }
+      if (sort === 'NAME_ASC') {
+        return a.companyName.localeCompare(b.companyName, 'lo');
+      }
+      if (sort === 'NAME_DESC') {
+        return b.companyName.localeCompare(a.companyName, 'lo');
+      }
+      if (sort === 'DATE_DESC') {
+        return new Date(b.workOpenDate || 0).getTime() - new Date(a.workOpenDate || 0).getTime();
+      }
+      if (sort === 'DATE_ASC') {
+        return new Date(a.workOpenDate || 0).getTime() - new Date(b.workOpenDate || 0).getTime();
+      }
+      // Default: SEQ_DESC (15 -> 1)
+      return (b.seq ?? 0) - (a.seq ?? 0);
+    });
 
   // Handlers
   const handleSaveDocument = (docData: Partial<DocumentRecord>) => {
@@ -328,10 +349,16 @@ export default function App() {
         {activeTab === 1 && (
           <div className="space-y-4">
             
-            {/* Filter Bar with Search & Search History */}
+            {/* Filter Bar with Search, Search History & Task Shortcuts */}
             <DocumentFilterBar
               filters={filters}
               onFilterChange={setFilters}
+              documents={documents}
+              onOpenNewDocumentModal={() => {
+                setDocToEdit(null);
+                setIsFormModalOpen(true);
+              }}
+              onSelectTab={(tabId) => setActiveTab(tabId)}
               onResetFilters={() =>
                 setFilters({
                   line: 'ALL',
@@ -340,6 +367,8 @@ export default function App() {
                   paymentStatus: 'ALL',
                   software: 'ALL',
                   renewal2026Only: false,
+                  companyType: 'ALL',
+                  workflowStep: 'ALL',
                   searchQuery: '',
                 })
               }
