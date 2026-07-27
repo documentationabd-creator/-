@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Building2, FileText, Calendar, MapPin, Laptop, DollarSign, ShieldCheck, Check, AlertCircle, Plus, Upload, Trash2, Download, MessageSquare, Briefcase, CheckCircle2 } from 'lucide-react';
+import { X, Save, Building2, FileText, Calendar, MapPin, Laptop, DollarSign, ShieldCheck, Check, AlertCircle, Plus, Upload, Trash2, Download, MessageSquare, Briefcase, CheckCircle2, Key } from 'lucide-react';
 import { DocumentRecord, ExchangeRates, OperationStatusType, PaymentStatusType, ReimbursementStatusType, UrgencyType, TASK_OPTIONS } from '../types/document';
 import { calculateDefaultExpiryDate, calculateProcessingDays, convertToTotalLAK, formatCurrencyLAK } from '../utils/formatters';
 import { downloadAttachmentFile } from '../utils/fileDownloadUtils';
@@ -32,7 +32,7 @@ export const DocumentFormModal: React.FC<Props> = ({
   onSave,
   totalRecordsCount,
 }) => {
-  const [activeTab, setActiveTab] = useState<'GENERAL' | 'FILES' | 'SUBMISSION' | 'SOFTWARE' | 'FINANCIAL' | 'USERS' | 'REMARKS'>('GENERAL');
+  const [activeTab, setActiveTab] = useState<'GENERAL' | 'FILES' | 'SUBMISSION' | 'SOFTWARE' | 'FINANCIAL' | 'USERS' | 'REMARKS' | 'TAX_ACC'>('GENERAL');
   
   // Local state initialized with empty or edit object
   const [formData, setFormData] = useState<Partial<DocumentRecord>>({});
@@ -354,6 +354,19 @@ export const DocumentFormModal: React.FC<Props> = ({
             <MessageSquare className="w-3.5 h-3.5" />
             <span>7. ໝາຍເຫດ & ບັນທຶກ</span>
           </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('TAX_ACC')}
+            className={`px-4 py-3 border-b-2 font-semibold whitespace-nowrap transition flex items-center space-x-1.5 ${
+              activeTab === 'TAX_ACC'
+                ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400'
+                : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+            }`}
+          >
+            <Key className="w-3.5 h-3.5" />
+            <span>8. TaxRIS & Accservice</span>
+          </button>
         </div>
 
         {/* Form Body */}
@@ -562,7 +575,7 @@ export const DocumentFormModal: React.FC<Props> = ({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     ລາຍຊື່ຜູ້ປະສານງານ
@@ -571,6 +584,20 @@ export const DocumentFormModal: React.FC<Props> = ({
                     type="text"
                     value={formData.coordinatorName || ''}
                     onChange={(e) => setFormData({ ...formData, coordinatorName: e.target.value })}
+                    placeholder="ປ້ອນຊື່ຜູ້ປະສານງານ..."
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    ນາຍໜ້າ (Broker / Agent)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.brokerName || ''}
+                    onChange={(e) => setFormData({ ...formData, brokerName: e.target.value })}
+                    placeholder="ປ້ອນຊື່ນາຍໜ້າ (ຖ້າມີ)..."
                     className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
                   />
                 </div>
@@ -706,6 +733,12 @@ export const DocumentFormModal: React.FC<Props> = ({
                   { key: 'workOpenAttachment', label: '6. ໄຟລ໌ແນບໃບເປີດວຽກ' },
                   { key: 'registrationAttachment', label: '10. ໄຟລ໌ແນບໃບທະບຽນ' },
                   { key: 'memoAttachment', label: '11. ໄຟລ໌ແນບບົດບັນທຶກ' },
+                  { key: 'bankStatementAttachment', label: 'ໄຟລ໌ແນບສະເຕດເມັ້ນ' },
+                  { key: 'accountingTrackingAttachment', label: 'ໄຟລ໌ແນບໃບຕິດຕາມຖືບັນຊີ' },
+                  { key: 'contractAttachment', label: 'ໄຟລ໌ແນບສັນຍາຕິດຕັ້ງໂປຣແກຣມ' },
+                  { key: 'summaryReportAttachment', label: 'ໄຟລ໌ແນບບົດສະຫຼຸບ' },
+                  { key: 'auditReportAttachment', label: 'ໄຟລ໌ແນບບົດກວດກາໄລ່ລຽງ' },
+                  { key: 'otherDocsAttachment', label: 'ໄຟລ໌ແນບເອກະສານອື່ນໆ' },
                   { key: 'prevYearLicenseAttachment', label: '12. ໃບອະນຸຍາດນຳໃຊ້ປີຜ່ານມາ' },
                   { key: 'taxCertAttachment', label: '13. ໃບອມພ (ອາກອນ)' },
                   { key: 'prevYearObligationAttachment', label: '14. ໃບມອບພັນທະປີຜ່ານມາ' },
@@ -1772,6 +1805,94 @@ export const DocumentFormModal: React.FC<Props> = ({
                     placeholder="ໝາຍເຫດສັນຍາ, ເງື່ອນໄຂ..."
                     className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-xs"
                   />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 8: TAXRIS & ACCSERVICE CREDENTIALS */}
+          {activeTab === 'TAX_ACC' && (
+            <div className="space-y-6 animate-in fade-in duration-150">
+              <div className="flex items-center space-x-2 text-sm font-bold text-slate-800 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700 pb-2">
+                <Key className="w-4 h-4 text-emerald-600" />
+                <span>8. ຂໍ້ມູນເຂົ້າລະບົບ TaxRIS & Accservice</span>
+              </div>
+
+              {/* 1. TaxRIS Section */}
+              <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-700/80 space-y-3">
+                <div className="flex items-center space-x-2">
+                  <span className="w-6 h-6 rounded-lg bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-300 font-bold text-xs flex items-center justify-center">
+                    1
+                  </span>
+                  <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm">
+                    TaxRIS
+                  </h4>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      ຢູເຊີ້ TaxRIS (TaxRIS Username)
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.taxRisUser || ''}
+                      onChange={(e) => setFormData({ ...formData, taxRisUser: e.target.value })}
+                      placeholder="ປ້ອນຢູເຊີ້ TaxRIS..."
+                      className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      ລະຫັດ TaxRIS (TaxRIS Password)
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.taxRisPass || ''}
+                      onChange={(e) => setFormData({ ...formData, taxRisPass: e.target.value })}
+                      placeholder="ປ້ອນລະຫັດ TaxRIS..."
+                      className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. Accservice Section */}
+              <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-700/80 space-y-3">
+                <div className="flex items-center space-x-2">
+                  <span className="w-6 h-6 rounded-lg bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300 font-bold text-xs flex items-center justify-center">
+                    2
+                  </span>
+                  <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm">
+                    Accservice
+                  </h4>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      ຢູເຊີ້ Accservice (Accservice Username)
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.accServiceUser || ''}
+                      onChange={(e) => setFormData({ ...formData, accServiceUser: e.target.value })}
+                      placeholder="ປ້ອນຢູເຊີ້ Accservice..."
+                      className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      ລະຫັດ Accservice (Accservice Password)
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.accServicePass || ''}
+                      onChange={(e) => setFormData({ ...formData, accServicePass: e.target.value })}
+                      placeholder="ປ້ອນລະຫັດ Accservice..."
+                      className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-mono"
+                    />
+                  </div>
                 </div>
               </div>
             </div>

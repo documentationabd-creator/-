@@ -68,6 +68,7 @@ export interface DocumentRecord {
   workOpenAttachment?: FileAttachment;
   tinNo: string;
   coordinatorName: string;
+  brokerName?: string; // ນາຍໜ້າ (ສາມາດພິມໄດ້)
   
   // Section 9
   urgency: UrgencyType; // NORMAL (ປົກກະຕິ), URGENT (ດ່ວນ)
@@ -78,6 +79,14 @@ export interface DocumentRecord {
   prevYearLicenseAttachment?: FileAttachment;
   taxCertAttachment?: FileAttachment;
   prevYearObligationAttachment?: FileAttachment;
+  
+  // Additional Attachments
+  bankStatementAttachment?: FileAttachment; // ສະເຕດເມັ້ນ
+  accountingTrackingAttachment?: FileAttachment; // ໃບຕິດຕາມຖືບັນຊີ
+  contractAttachment?: FileAttachment; // ສັນຍາຕິດຕັ້ງໂປຣແກຣມ
+  summaryReportAttachment?: FileAttachment; // ບົດສະຫຼຸບ
+  auditReportAttachment?: FileAttachment; // ບົດກວດກາໄລ່ລຽງ
+  otherDocsAttachment?: FileAttachment; // ເອກະສານອື່ນໆ
   
   // Section 15-16: Processing & Expiry
   processingDays: number; // calculated from workOpenDate
@@ -193,6 +202,12 @@ export interface DocumentRecord {
     secondaryUser: UserAccountInfo;
   };
   
+  // Section 36: TaxRIS & Accservice Credentials
+  taxRisUser?: string;
+  taxRisPass?: string;
+  accServiceUser?: string;
+  accServicePass?: string;
+
   // Section 35: Database sync & Audit History
   masterDatabaseSync: boolean;
   documentExchangeRates?: ExchangeRates;
@@ -209,6 +224,7 @@ export interface ExchangeRates {
 
 export interface FilterState {
   line: string; // 'ALL' or specific line
+  taskType?: string; // 'ALL' | TASK_OPTIONS[number]
   urgency: string; // 'ALL' | 'NORMAL' | 'URGENT'
   status: string; // 'ALL' | OperationStatusType
   paymentStatus: string; // 'ALL' | PaymentStatusType

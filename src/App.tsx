@@ -44,6 +44,7 @@ export default function App() {
   // Filter State
   const [filters, setFilters] = useState<FilterState>({
     line: 'ALL',
+    taskType: 'ALL',
     urgency: 'ALL',
     status: 'ALL',
     paymentStatus: 'ALL',
@@ -88,6 +89,9 @@ export default function App() {
     .filter((doc) => {
       // 1. Line filter
       if (filters.line !== 'ALL' && doc.line !== filters.line) return false;
+
+      // 1.5. Task Type filter
+      if (filters.taskType && filters.taskType !== 'ALL' && doc.taskType !== filters.taskType) return false;
 
       // 2. Urgency filter
       if (filters.urgency !== 'ALL' && doc.urgency !== filters.urgency) return false;
@@ -136,10 +140,14 @@ export default function App() {
         const matchTin = doc.tinNo.toLowerCase().includes(q);
         const matchIncoming = doc.incomingNo.toLowerCase().includes(q);
         const matchCoord = doc.coordinatorName.toLowerCase().includes(q);
+        const matchBroker = doc.brokerName?.toLowerCase().includes(q);
+        const matchTask = doc.taskType?.toLowerCase().includes(q);
+        const matchTaxRis = doc.taxRisUser?.toLowerCase().includes(q);
+        const matchAccService = doc.accServiceUser?.toLowerCase().includes(q);
         const matchLoc = doc.submissionLocation.toLowerCase().includes(q);
         const matchSubIncoming = doc.submissionIncomingNo.toLowerCase().includes(q);
 
-        if (!matchName && !matchTin && !matchIncoming && !matchCoord && !matchLoc && !matchSubIncoming) {
+        if (!matchName && !matchTin && !matchIncoming && !matchCoord && !matchBroker && !matchTask && !matchTaxRis && !matchAccService && !matchLoc && !matchSubIncoming) {
           return false;
         }
       }
@@ -362,6 +370,7 @@ export default function App() {
               onResetFilters={() =>
                 setFilters({
                   line: 'ALL',
+                  taskType: 'ALL',
                   urgency: 'ALL',
                   status: 'ALL',
                   paymentStatus: 'ALL',

@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Building2, FileText, DollarSign, Calendar, MapPin, CheckCircle2, AlertCircle, Clock, ShieldCheck, Download, History, Edit, ExternalLink, Laptop, FolderDown } from 'lucide-react';
+import { X, Building2, FileText, DollarSign, Calendar, MapPin, CheckCircle2, AlertCircle, Clock, ShieldCheck, Download, History, Edit, ExternalLink, Laptop, FolderDown, Key } from 'lucide-react';
 import { DocumentRecord, ExchangeRates } from '../types/document';
 import { convertToTotalLAK, formatCurrencyLAK, formatDateDisplay, formatMultiCurrencySummary, getOperationStatusLabel, getPaymentStatusLabel, getUrgencyLabel } from '../utils/formatters';
 import { downloadAttachmentFile } from '../utils/fileDownloadUtils';
@@ -148,6 +148,12 @@ export const DocumentDetailModal: React.FC<Props> = ({
               <div>
                 <span className="text-xs text-slate-400 block">ຜູ້ປະສານງານ:</span>
                 <span className="font-semibold text-slate-800 dark:text-slate-200">{doc.coordinatorName || '-'}</span>
+              </div>
+              <div>
+                <span className="text-xs text-slate-400 block">ນາຍໜ້າ (Broker):</span>
+                <span className="font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/50 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-800 inline-block text-xs">
+                  {doc.brokerName || '-'}
+                </span>
               </div>
               <div>
                 <span className="text-xs text-slate-400 block">ຈຳນວນວັນດຳເນີນ (ນັບຈາກມື້ເປີດວຽກ):</span>
@@ -331,6 +337,39 @@ export const DocumentDetailModal: React.FC<Props> = ({
             </div>
           </div>
 
+          {/* Section 8: ຂໍ້ມູນເຂົ້າລະບົບ TaxRIS & Accservice */}
+          <div className="space-y-3">
+            <h3 className="font-semibold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-700 pb-2 flex items-center space-x-2">
+              <Key className="w-4 h-4 text-emerald-600" />
+              <span>8. ຂໍ້ມູນເຂົ້າລະບົບ TaxRIS & Accservice</span>
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="p-3 bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-slate-100 dark:border-slate-700/80">
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  1. TaxRIS:
+                </span>
+                <p className="text-xs text-slate-600 dark:text-slate-400">
+                  ຢູເຊີ້ TaxRIS: <strong className="text-slate-800 dark:text-slate-200">{doc.taxRisUser || '-'}</strong>
+                </p>
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                  ລະຫັດ TaxRIS: <strong className="text-slate-800 dark:text-slate-200 font-mono">{doc.taxRisPass || '-'}</strong>
+                </p>
+              </div>
+
+              <div className="p-3 bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-slate-100 dark:border-slate-700/80">
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  2. Accservice:
+                </span>
+                <p className="text-xs text-slate-600 dark:text-slate-400">
+                  ຢູເຊີ້ Accservice: <strong className="text-slate-800 dark:text-slate-200">{doc.accServiceUser || '-'}</strong>
+                </p>
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                  ລະຫັດ Accservice: <strong className="text-slate-800 dark:text-slate-200 font-mono">{doc.accServicePass || '-'}</strong>
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Section 7: ໄຟລ໌ແນບເອກະສານ & ດາວໂຫຼດ */}
           <div className="space-y-3">
             <h3 className="font-semibold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-700 pb-2 flex items-center space-x-2">
@@ -343,6 +382,12 @@ export const DocumentDetailModal: React.FC<Props> = ({
                 { label: '6. ໃບເປີດວຽກ', file: doc.workOpenAttachment },
                 { label: '10. ໃບທະບຽນວິສາຫະກິດ', file: doc.registrationAttachment },
                 { label: '11. ໃບສະເໜີ/ບົດບັນທຶກ', file: doc.memoAttachment },
+                { label: 'ສະເຕດເມັ້ນ', file: doc.bankStatementAttachment },
+                { label: 'ໃບຕິດຕາມຖືບັນຊີ', file: doc.accountingTrackingAttachment },
+                { label: 'ສັນຍາຕິດຕັ້ງໂປຣແກຣມ', file: doc.contractAttachment },
+                { label: 'ບົດສະຫຼຸບ', file: doc.summaryReportAttachment },
+                { label: 'ບົດກວດກາໄລ່ລຽງ', file: doc.auditReportAttachment },
+                { label: 'ເອກະສານອື່ນໆ', file: doc.otherDocsAttachment },
                 { label: '12. ໃບອະນຸຍາດປີຜ່ານມາ', file: doc.prevYearLicenseAttachment },
                 { label: '13. ໃບອມພ/ຢັ້ງຢືນອາກອນ', file: doc.taxCertAttachment },
                 { label: '14. ໃບມອບພັນທະປີຜ່ານມາ', file: doc.prevYearObligationAttachment },

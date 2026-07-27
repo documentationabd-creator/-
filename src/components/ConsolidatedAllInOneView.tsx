@@ -857,10 +857,15 @@ export const ConsolidatedAllInOneView: React.FC<Props> = ({
                         {idx + 1}
                       </td>
 
-                      {/* Company Name & TIN */}
+                      {/* Company Name & Task Type */}
                       <td className="px-3 py-2.5 font-medium">
-                        <div className="font-bold text-slate-900 dark:text-slate-100 flex items-center space-x-1">
-                          <span className="truncate max-w-[170px]">{doc.companyName}</span>
+                        <div className="font-bold text-slate-900 dark:text-slate-100 flex flex-wrap items-center gap-1.5">
+                          <span>{doc.companyName}</span>
+                          {doc.taskType && (
+                            <span className="bg-teal-100 text-teal-900 dark:bg-teal-950/90 dark:text-teal-200 border border-teal-300 dark:border-teal-700 px-1.5 py-0.5 rounded text-[10px] font-extrabold whitespace-nowrap">
+                              {doc.taskType}
+                            </span>
+                          )}
                           {doc.isNewCompany && (
                             <span className="text-[9px] bg-emerald-100 text-emerald-700 font-bold px-1 rounded">
                               NEW
@@ -868,15 +873,15 @@ export const ConsolidatedAllInOneView: React.FC<Props> = ({
                           )}
                         </div>
                         <div className="text-[10px] text-slate-400 flex flex-wrap items-center gap-1 mt-0.5">
-                          {doc.taskType && (
-                            <span className="bg-teal-100 text-teal-800 dark:bg-teal-950/80 dark:text-teal-300 px-1 rounded font-bold">
-                              {doc.taskType}
-                            </span>
-                          )}
                           <span>TIN: {doc.tinNo || '-'}</span>
                           <span className="bg-slate-100 dark:bg-slate-700 px-1 rounded font-semibold text-slate-600 dark:text-slate-300">
                             {doc.line || 'ບໍ່ມີສາຍ'}
                           </span>
+                          {doc.brokerName && (
+                            <span className="bg-amber-100 text-amber-900 dark:bg-amber-950/80 dark:text-amber-200 border border-amber-300 dark:border-amber-700 px-1 rounded font-extrabold">
+                              ນາຍໜ້າ: {doc.brokerName}
+                            </span>
+                          )}
                         </div>
                       </td>
 

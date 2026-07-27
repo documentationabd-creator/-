@@ -140,7 +140,7 @@ export const DocumentListTable: React.FC<Props> = ({
           <thead className="bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-bold uppercase tracking-wider border-b border-slate-200 dark:border-slate-700 sticky top-0 z-10 shadow-xs">
             <tr>
               <th className="py-3.5 px-3 text-center w-12">ລຳດັບ</th>
-              <th className="py-3.5 px-4 min-w-[200px]">ລາຍຊື່ບໍລິສັດ / ສາຍ</th>
+              <th className="py-3.5 px-4 min-w-[220px]">ລາຍຊື່ບໍລິສັດ / ໜ້າວຽກ / ສາຍ</th>
               <th className="py-3.5 px-3 min-w-[130px]">ເລກຂາເຂົ້າ / TIN</th>
               <th className="py-3.5 px-3 text-center min-w-[100px]">ຄວາມດ່ວນ</th>
               <th className="py-3.5 px-3 text-center min-w-[110px]">ມື້ເປີດ / ວັນດຳເນີນ</th>
@@ -176,23 +176,30 @@ export const DocumentListTable: React.FC<Props> = ({
                     {doc.seq !== undefined && doc.seq !== null ? doc.seq : idx + 1}
                   </td>
 
-                  {/* Company Name & Line */}
+                  {/* Company Name, Task Type & Line */}
                   <td className="py-3 px-4">
-                    <div
-                      onClick={() => onViewDetails(doc)}
-                      className="font-bold text-slate-900 dark:text-slate-100 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer text-xs"
-                    >
-                      {doc.companyName}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-1 mt-1 text-[11px]">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span
+                        onClick={() => onViewDetails(doc)}
+                        className="font-extrabold text-slate-900 dark:text-slate-100 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer text-xs"
+                      >
+                        {doc.companyName}
+                      </span>
                       {doc.taskType && (
-                        <span className="px-1.5 py-0.5 rounded bg-teal-100 text-teal-800 dark:bg-teal-950/80 dark:text-teal-300 font-bold border border-teal-200/80 dark:border-teal-800">
+                        <span className="px-2 py-0.5 rounded-lg bg-teal-100 text-teal-900 dark:bg-teal-950/90 dark:text-teal-200 font-bold border border-teal-300 dark:border-teal-700 text-[11px] shadow-2xs">
                           {doc.taskType}
                         </span>
                       )}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-1 mt-1 text-[11px]">
                       <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-semibold">
                         ສາຍ: {doc.line || 'ບໍ່ມີສາຍ'}
                       </span>
+                      {doc.brokerName && (
+                        <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 dark:bg-amber-950/70 dark:text-amber-200 font-bold border border-amber-300/80 dark:border-amber-700">
+                          ນາຍໜ້າ: {doc.brokerName}
+                        </span>
+                      )}
                       {doc.isNewCompany && (
                         <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 font-bold">
                           ບໍລິສັດໃໝ່

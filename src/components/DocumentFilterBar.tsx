@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, History, X, RotateCcw, ChevronDown, Zap, Plus, AlertTriangle, Clock, CheckCircle2, FileCheck, Building2, RefreshCw, Layers, Sparkles } from 'lucide-react';
-import { DocumentRecord, FilterState } from '../types/document';
+import { Search, Filter, History, X, RotateCcw, ChevronDown, Zap, Plus, AlertTriangle, Clock, CheckCircle2, FileCheck, Building2, RefreshCw, Layers, Sparkles, Briefcase } from 'lucide-react';
+import { DocumentRecord, FilterState, TASK_OPTIONS } from '../types/document';
 
 interface Props {
   filters: FilterState;
@@ -299,13 +299,30 @@ export const DocumentFilterBar: React.FC<Props> = ({
         </button>
       </div>
 
-      {/* Filter Select Controls Grid (1. Line, 2. Urgency, 3. Status, 4. Payment, 5. Software, 6. Company Type, 7. Workflow Step, 8. Renewal) */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5 pt-1 text-xs">
+      {/* Filter Select Controls Grid (1. Task Type, 2. Line, 3. Urgency, 4. Status, 5. Payment, 6. Software, 7. Company Type, 8. Workflow Step, 9. Renewal) */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-9 gap-2 pt-1 text-xs">
         
-        {/* 1. Line */}
+        {/* 1. Task Type */}
         <div>
-          <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
-            1. ສາຍວຽກ
+          <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1 truncate">
+            1. ໜ້າວຽກ
+          </label>
+          <select
+            value={filters.taskType || 'ALL'}
+            onChange={(e) => onFilterChange({ ...filters, taskType: e.target.value })}
+            className="w-full px-2 py-1.5 rounded-xl border border-teal-300 dark:border-teal-700 bg-teal-50/50 dark:bg-teal-950/30 text-teal-900 dark:text-teal-200 font-bold text-[11px]"
+          >
+            <option value="ALL">ທຸກໜ້າວຽກ</option>
+            {TASK_OPTIONS.map((task) => (
+              <option key={task} value={task}>{task}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* 2. Line */}
+        <div>
+          <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1 truncate">
+            2. ສາຍວຽກ
           </label>
           <select
             value={filters.line}
@@ -319,10 +336,10 @@ export const DocumentFilterBar: React.FC<Props> = ({
           </select>
         </div>
 
-        {/* 2. Task Urgency */}
+        {/* 3. Task Urgency */}
         <div>
-          <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
-            2. ຄວາມສຳຄັນ
+          <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1 truncate">
+            3. ຄວາມສຳຄັນ
           </label>
           <select
             value={filters.urgency}
@@ -335,10 +352,10 @@ export const DocumentFilterBar: React.FC<Props> = ({
           </select>
         </div>
 
-        {/* 3. Operation Status */}
+        {/* 4. Operation Status */}
         <div>
-          <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
-            3. ສະຖານະການດຳເນີນ
+          <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1 truncate">
+            4. ສະຖານະ
           </label>
           <select
             value={filters.status}
@@ -354,10 +371,10 @@ export const DocumentFilterBar: React.FC<Props> = ({
           </select>
         </div>
 
-        {/* 4. Payment Status */}
+        {/* 5. Payment Status */}
         <div>
-          <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
-            4. ສະຖານະຊຳລະ
+          <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1 truncate">
+            5. ສະຖານະຊຳລະ
           </label>
           <select
             value={filters.paymentStatus}
@@ -372,10 +389,10 @@ export const DocumentFilterBar: React.FC<Props> = ({
           </select>
         </div>
 
-        {/* 5. Program Installation */}
+        {/* 6. Program Installation */}
         <div>
-          <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
-            5. ຕິດຕັ້ງໂປຣແກຣມ
+          <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1 truncate">
+            6. ໂປຣແກຣມ
           </label>
           <select
             value={filters.software}
@@ -391,10 +408,10 @@ export const DocumentFilterBar: React.FC<Props> = ({
           </select>
         </div>
 
-        {/* 6. Company Type (New vs Existing) */}
+        {/* 7. Company Type (New vs Existing) */}
         <div>
-          <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
-            6. ປະເພດບໍລິສັດ
+          <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1 truncate">
+            7. ປະເພດບໍລິສັດ
           </label>
           <select
             value={filters.companyType || 'ALL'}
@@ -407,10 +424,10 @@ export const DocumentFilterBar: React.FC<Props> = ({
           </select>
         </div>
 
-        {/* 7. Workflow Step (4 ຂັ້ນຕອນ) */}
+        {/* 8. Workflow Step (4 ຂັ້ນຕອນ) */}
         <div>
-          <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
-            7. ຂັ້ນຕອນວຽກ
+          <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1 truncate">
+            8. ຂັ້ນຕອນວຽກ
           </label>
           <select
             value={filters.workflowStep || 'ALL'}
@@ -429,16 +446,16 @@ export const DocumentFilterBar: React.FC<Props> = ({
           </select>
         </div>
 
-        {/* 8. Renewal 2026 Filter Checkbox */}
+        {/* 9. Renewal 2026 Filter Checkbox */}
         <div className="flex items-end pb-1">
-          <label className="inline-flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 font-semibold cursor-pointer w-full justify-center">
+          <label className="inline-flex items-center space-x-1.5 px-2 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 font-semibold cursor-pointer w-full justify-center">
             <input
               type="checkbox"
               checked={filters.renewal2026Only}
               onChange={(e) => onFilterChange({ ...filters, renewal2026Only: e.target.checked })}
               className="rounded text-amber-600 focus:ring-amber-500 w-3.5 h-3.5"
             />
-            <span className="text-[11px]">8. ຕໍ່ 2026 ຢ່າງດຽວ</span>
+            <span className="text-[11px] truncate">9. ຕໍ່ 2026</span>
           </label>
         </div>
 
