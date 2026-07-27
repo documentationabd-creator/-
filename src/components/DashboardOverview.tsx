@@ -52,8 +52,26 @@ export const DashboardOverview: React.FC<Props> = ({ documents, rates }) => {
     0
   );
 
-  // 2. Total Outstanding Balance converted into LAK
-  const totalOutstandingLAK = filteredDocs.reduce(
+  // 2. Outstanding Balance breakdown by currency (directly per currency)
+  const totalOutstandingLAK_Sum = filteredDocs.reduce(
+    (acc, doc) => acc + (doc.customerPayment?.outstandingBalance?.lak || 0),
+    0
+  );
+  const totalOutstandingUSD_Sum = filteredDocs.reduce(
+    (acc, doc) => acc + (doc.customerPayment?.outstandingBalance?.usd || 0),
+    0
+  );
+  const totalOutstandingCNY_Sum = filteredDocs.reduce(
+    (acc, doc) => acc + (doc.customerPayment?.outstandingBalance?.cny || 0),
+    0
+  );
+  const totalOutstandingOther_Sum = filteredDocs.reduce(
+    (acc, doc) => acc + (doc.customerPayment?.outstandingBalance?.otherValue || 0),
+    0
+  );
+
+  // Grand total converted into LAK (reference)
+  const grandTotalOutstandingLAK = filteredDocs.reduce(
     (acc, doc) => acc + convertToTotalLAK(doc.customerPayment?.outstandingBalance, rates),
     0
   );
@@ -230,25 +248,99 @@ export const DashboardOverview: React.FC<Props> = ({ documents, rates }) => {
           </div>
         </div>
 
-        {/* Section 2: Outstanding Balance & Company Activity Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          
-          {/* Outstanding Balance */}
-          <div className="bg-gradient-to-br from-amber-500 to-orange-700 text-white p-5 rounded-2xl shadow-md space-y-2 relative overflow-hidden">
-            <div className="absolute right-3 top-3 p-3 bg-white/10 rounded-2xl backdrop-blur-xs">
-              <Clock className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-xs font-semibold text-amber-100 uppercase tracking-wide block">
-              ຍອດຄ້າງຊຳລະ (Outstanding)
+        {/* Section 2: Outstanding Balance Breakdown Cards (1. LAK, 2. $, 3. Y, 4. Other) */}
+        <div className="space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center space-x-2">
+              <Clock className="w-4 h-4 text-amber-600" />
+              <span>ສະຫຼຸບຍອດຄ້າງຊຳລະ (Outstanding 4 ສະກຸນເງິນ)</span>
+            </h3>
+            <span className="text-xs font-bold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/60 px-3 py-1.5 rounded-full border border-amber-200 dark:border-amber-800 self-start sm:self-auto flex flex-wrap items-center gap-x-2">
+              <span>ລວມຍອດຄ້າງຊຳລະ:</span>
+              <span className="text-amber-900 dark:text-amber-200 font-extrabold">{formatCurrencyLAK(totalOutstandingLAK_Sum)}</span>
+              <span>+</span>
+              <span className="text-orange-900 dark:text-orange-300 font-extrabold">{formatCurrencyUSD(totalOutstandingUSD_Sum)}</span>
+              <span>+</span>
+              <span className="text-rose-900 dark:text-rose-300 font-extrabold">{formatCurrencyCNY(totalOutstandingCNY_Sum)}</span>
+              {totalOutstandingOther_Sum > 0 && (
+                <>
+                  <span>+</span>
+                  <span className="text-purple-900 dark:text-purple-300 font-extrabold">{totalOutstandingOther_Sum.toLocaleString()} (ອື່ນໆ)</span>
+                </>
+              )}
             </span>
-            <div className="text-2xl font-black tracking-tight">
-              {formatCurrencyLAK(totalOutstandingLAK)}
-            </div>
-            <p className="text-[11px] text-amber-100 opacity-90 pt-1">
-              ຍອດລູກຄ້າທີ່ຍັງບໍ່ທັນຊຳລະ ຫຼື ຊຳລະບາງສ່ວນ
-            </p>
           </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* 1. LAK Outstanding */}
+            <div className="bg-gradient-to-br from-amber-600 to-orange-700 text-white p-5 rounded-2xl shadow-md space-y-2 relative overflow-hidden">
+              <div className="absolute right-3 top-3 p-2 bg-white/10 rounded-xl backdrop-blur-xs font-black text-xs">
+                LAK
+              </div>
+              <span className="text-xs font-semibold text-amber-100 uppercase tracking-wide block">
+                1. ຍອດຄ້າງຊຳລະ LAK
+              </span>
+              <div className="text-2xl font-black tracking-tight">
+                {formatCurrencyLAK(totalOutstandingLAK_Sum)}
+              </div>
+              <p className="text-[11px] text-amber-100/90 pt-1">
+                ຍອດຄ້າງຊຳລະສະກຸນເງິນກີບ (LAK)
+              </p>
+            </div>
+
+            {/* 2. USD ($) Outstanding */}
+            <div className="bg-gradient-to-br from-orange-600 to-amber-700 text-white p-5 rounded-2xl shadow-md space-y-2 relative overflow-hidden">
+              <div className="absolute right-3 top-3 p-2 bg-white/10 rounded-xl backdrop-blur-xs font-black text-xs">
+                USD ($)
+              </div>
+              <span className="text-xs font-semibold text-orange-100 uppercase tracking-wide block">
+                2. ຍອດຄ້າງຊຳລະ $
+              </span>
+              <div className="text-2xl font-black tracking-tight">
+                {formatCurrencyUSD(totalOutstandingUSD_Sum)}
+              </div>
+              <p className="text-[11px] text-orange-100/90 pt-1">
+                ຍອດຄ້າງຊຳລະສະກຸນເງິນໂດລາ ($)
+              </p>
+            </div>
+
+            {/* 3. CNY (Y) Outstanding */}
+            <div className="bg-gradient-to-br from-red-600 to-amber-800 text-white p-5 rounded-2xl shadow-md space-y-2 relative overflow-hidden">
+              <div className="absolute right-3 top-3 p-2 bg-white/10 rounded-xl backdrop-blur-xs font-black text-xs">
+                CNY (¥)
+              </div>
+              <span className="text-xs font-semibold text-red-100 uppercase tracking-wide block">
+                3. ຍອດຄ້າງຊຳລະ Y
+              </span>
+              <div className="text-2xl font-black tracking-tight">
+                {formatCurrencyCNY(totalOutstandingCNY_Sum)}
+              </div>
+              <p className="text-[11px] text-red-100/90 pt-1">
+                ຍອດຄ້າງຊຳລະສະກຸນເງິນຢວນ (CNY)
+              </p>
+            </div>
+
+            {/* 4. Other Outstanding */}
+            <div className="bg-gradient-to-br from-purple-700 to-rose-800 text-white p-5 rounded-2xl shadow-md space-y-2 relative overflow-hidden">
+              <div className="absolute right-3 top-3 p-2 bg-white/10 rounded-xl backdrop-blur-xs font-black text-xs">
+                OTHER
+              </div>
+              <span className="text-xs font-semibold text-purple-100 uppercase tracking-wide block">
+                4. ຍອດຄ້າງຊຳລະ ອື່ນໆ
+              </span>
+              <div className="text-2xl font-black tracking-tight">
+                {totalOutstandingOther_Sum > 0 ? totalOutstandingOther_Sum.toLocaleString() : '0'}
+              </div>
+              <p className="text-[11px] text-purple-100/90 pt-1">
+                ຍອດຄ້າງຊຳລະສະກຸນເງິນອື່ນໆ
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Section 3: Company Activity Stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          
           {/* Total Opened Companies */}
           <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm space-y-2">
             <div className="flex items-center justify-between">
