@@ -252,12 +252,12 @@ export const DocumentDetailModal: React.FC<Props> = ({
               </div>
 
               <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-100 dark:border-amber-900/40">
-                <span className="text-xs text-amber-700 dark:text-amber-300 font-medium">ຍອດຄ້າງຊຳລະ (LAK)</span>
+                <span className="text-xs text-amber-700 dark:text-amber-300 font-medium">ຍອດຄ້າງຊຳລະ (4 ສະກຸນເງິນ)</span>
                 <p className="text-base font-bold text-amber-800 dark:text-amber-200 mt-1">
-                  {formatCurrencyLAK(totalOutLAK)}
+                  {formatMultiCurrencySummary(doc.customerPayment.outstandingBalance, rates)}
                 </p>
                 <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-0.5">
-                  {paymentBadge.label}
+                  {paymentBadge.label} (ແປງເປັນ LAK: {formatCurrencyLAK(totalOutLAK)})
                 </p>
               </div>
 

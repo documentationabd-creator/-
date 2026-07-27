@@ -1104,7 +1104,7 @@ export const DocumentFormModal: React.FC<Props> = ({
                 <h4 className="font-bold text-amber-800 dark:text-amber-300 text-xs">
                   30. ການຊຳລະເງິນຂອງລູກຄ້າ
                 </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                   <div>
                     <label className="block text-xs text-slate-600 dark:text-slate-400 mb-1">
                       30.2 ສະຖານະຊຳລະເງິນ
@@ -1132,7 +1132,7 @@ export const DocumentFormModal: React.FC<Props> = ({
 
                   <div>
                     <label className="block text-xs text-slate-600 dark:text-slate-400 mb-1">
-                      30.4 ຍອດຄ້າງຊຳລະ (LAK)
+                      30.4.1 ຍອດຄ້າງຊຳລະ (LAK)
                     </label>
                     <input
                       type="number"
@@ -1152,6 +1152,52 @@ export const DocumentFormModal: React.FC<Props> = ({
                       className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 font-bold text-xs"
                     />
                   </div>
+
+                  <div>
+                    <label className="block text-xs text-slate-600 dark:text-slate-400 mb-1">
+                      30.4.2 ຍອດຄ້າງຊຳລະ $ (USD)
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.customerPayment?.outstandingBalance?.usd || 0}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          customerPayment: {
+                            ...formData.customerPayment!,
+                            outstandingBalance: {
+                              ...formData.customerPayment!.outstandingBalance!,
+                              usd: Number(e.target.value),
+                            },
+                          },
+                        })
+                      }
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 font-bold text-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs text-slate-600 dark:text-slate-400 mb-1">
+                      30.4.3 ຍອດຄ້າງຊຳລະ Y (CNY)
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.customerPayment?.outstandingBalance?.cny || 0}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          customerPayment: {
+                            ...formData.customerPayment!,
+                            outstandingBalance: {
+                              ...formData.customerPayment!.outstandingBalance!,
+                              cny: Number(e.target.value),
+                            },
+                          },
+                        })
+                      }
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 font-bold text-xs"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -1160,7 +1206,7 @@ export const DocumentFormModal: React.FC<Props> = ({
                 <h4 className="font-bold text-slate-800 dark:text-slate-200 text-xs">
                   31. ລາຍຈ່າຍ ຄ່າຕິດຕັ້ງໂປຣແກຣມ & 32. ຄ່າໃຊ້ຈ່າຍເອກະສານ
                 </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                   <div>
                     <label className="block text-xs text-slate-500 mb-1">31.2 ຄ່າຕິດຕັ້ງ LAK</label>
                     <input
@@ -1175,7 +1221,25 @@ export const DocumentFormModal: React.FC<Props> = ({
                           },
                         })
                       }
-                      className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-xs"
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-xs font-bold"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs text-slate-500 mb-1">31.3 ຄ່າຕິດຕັ້ງ $ (USD)</label>
+                    <input
+                      type="number"
+                      value={formData.installationExpense?.usdCost || 0}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          installationExpense: {
+                            ...formData.installationExpense!,
+                            usdCost: Number(e.target.value),
+                          },
+                        })
+                      }
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-xs font-bold"
                     />
                   </div>
 

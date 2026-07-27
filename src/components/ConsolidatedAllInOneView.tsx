@@ -22,6 +22,8 @@ import { DocumentRecord, ExchangeRates, UrgencyType, OperationStatusType, Paymen
 import {
   convertToTotalLAK,
   formatCurrencyLAK,
+  formatCurrencyUSD,
+  formatCurrencyCNY,
   formatDateDisplay,
   getUrgencyLabel,
   getOperationStatusLabel,
@@ -139,10 +141,64 @@ export const ConsolidatedAllInOneView: React.FC<Props> = ({
     };
   };
 
-  // Aggregated totals across filtered documents
+  // Aggregated totals across filtered documents (direct 4-currency totals + converted totals)
   const aggregates = useMemo(() => {
     return filteredDocs.reduce(
       (acc, doc) => {
+        // 1. Revenue per currency
+        const revLAK = doc.totalValue?.lak || 0;
+        const revUSD = doc.totalValue?.usd || 0;
+        const revCNY = doc.totalValue?.cny || 0;
+        const revOther = doc.totalValue?.otherValue || 0;
+
+        acc.revenue.lak += revLAK;
+        acc.revenue.usd += revUSD;
+        acc.revenue.cny += revCNY;
+        acc.revenue.other += revOther;
+
+        // 2. Paid / Received per currency
+        const paidLAK = doc.customerPayment?.paidAmount?.lak || 0;
+        const paidUSD = doc.customerPayment?.paidAmount?.usd || 0;
+        const paidCNY = doc.customerPayment?.paidAmount?.cny || 0;
+        const paidOther = doc.customerPayment?.paidAmount?.otherValue || 0;
+
+        acc.paid.lak += paidLAK;
+        acc.paid.usd += paidUSD;
+        acc.paid.cny += paidCNY;
+        acc.paid.other += paidOther;
+
+        // 3. Outstanding Balance per currency
+        const outLAK = doc.customerPayment?.outstandingBalance?.lak || 0;
+        const outUSD = doc.customerPayment?.outstandingBalance?.usd || 0;
+        const outCNY = doc.customerPayment?.outstandingBalance?.cny || 0;
+        const outOther = doc.customerPayment?.outstandingBalance?.otherValue || 0;
+
+        acc.outstanding.lak += outLAK;
+        acc.outstanding.usd += outUSD;
+        acc.outstanding.cny += outCNY;
+        acc.outstanding.other += outOther;
+
+        // 4. Expenses per currency
+        const expLAK = (doc.installationExpense?.lakCost || 0) +
+          (doc.documentProcessingExpense?.feeCostLAK || 0) +
+          (doc.documentProcessingExpense?.urgentLicenseFeeLAK || 0) +
+          (doc.documentProcessingExpense?.supportFeeLAK || 0);
+        const expUSD = doc.installationExpense?.usdCost || 0;
+        const expCNY = 0;
+        const expOther = 0;
+
+        acc.expenses.lak += expLAK;
+        acc.expenses.usd += expUSD;
+        acc.expenses.cny += expCNY;
+        acc.expenses.other += expOther;
+
+        // 5. Net Profit per currency (Revenue - Expenses)
+        acc.netProfit.lak += (revLAK - expLAK);
+        acc.netProfit.usd += (revUSD - expUSD);
+        acc.netProfit.cny += (revCNY - expCNY);
+        acc.netProfit.other += (revOther - expOther);
+
+        // Converted values reference
         const fin = calculateDocFinancials(doc);
         acc.totalRevenue += fin.totalRevLAK;
         acc.totalPaid += fin.paidLAK;
@@ -153,9 +209,15 @@ export const ConsolidatedAllInOneView: React.FC<Props> = ({
         acc.totalSupportExp += fin.supportFeeLAK;
         acc.totalExpenses += fin.totalExpenseLAK;
         acc.totalNetProfit += fin.netProfitLAK;
+
         return acc;
       },
       {
+        revenue: { lak: 0, usd: 0, cny: 0, other: 0 },
+        paid: { lak: 0, usd: 0, cny: 0, other: 0 },
+        outstanding: { lak: 0, usd: 0, cny: 0, other: 0 },
+        expenses: { lak: 0, usd: 0, cny: 0, other: 0 },
+        netProfit: { lak: 0, usd: 0, cny: 0, other: 0 },
         totalRevenue: 0,
         totalPaid: 0,
         totalOutstanding: 0,
@@ -188,7 +250,7 @@ export const ConsolidatedAllInOneView: React.FC<Props> = ({
               </span>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              ສະແດງຂໍ້ມູນທຸກຢ່າງໃນຕາຕະລາງດຽວ: ລາຍການເອກະສານ, ໂປຣແກຣມຕິດຕັ້ງ, ຂັ້ນຕອນ, ລາຍຮັບ-ລາຍຈ່າຍ ແລະ ກຳໄລສຸດທິ
+              ສະແດງຂໍ້ມູນທຸກຢ່າງໃນຕາຕະລາງດຽວ: ລາຍການເອກະສານ, ໂປຣແກຣມຕິດຕັ້ງ, ຂັ້ນຕອນ, ລາຍຮັບ-ລາຍຈ່າຍ ແລະ ກຳໄລສຸດທິ (ແຍກ 4 ສະກຸນເງິນ)
             </p>
           </div>
         </div>
@@ -212,77 +274,178 @@ export const ConsolidatedAllInOneView: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Top Key Financial Summary Cards Bar */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      {/* Top Key Financial Summary Cards Bar (5 Metrics x 4 Currencies) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         
-        {/* Total Revenue */}
-        <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-xs space-y-1">
-          <div className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
-            <span>ລວມລາຍຮັບທັງໝົດ</span>
+        {/* 1. Total Revenue (ລວມລາຍຮັບທັງໝົດ) */}
+        <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-emerald-200 dark:border-emerald-800/60 shadow-xs space-y-3 flex flex-col justify-between">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700/60 pb-2">
+            <span className="text-xs font-extrabold text-emerald-700 dark:text-emerald-400">
+              1. ລວມລາຍຮັບທັງໝົດ
+            </span>
             <DollarSign className="w-4 h-4 text-emerald-600" />
           </div>
-          <p className="text-lg font-black text-emerald-600 dark:text-emerald-400 truncate">
-            {formatCurrencyLAK(aggregates.totalRevenue)}
-          </p>
-          <p className="text-[10px] text-slate-400">
-            ມູນຄ່າລວມຕາມສັນຍາ/ເອກະສານ
-          </p>
+          <div className="space-y-1.5 text-xs">
+            <div className="flex justify-between items-center">
+              <span className="text-slate-500 text-[11px]">LAK:</span>
+              <span className="font-bold text-emerald-700 dark:text-emerald-300">{formatCurrencyLAK(aggregates.revenue.lak)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-slate-500 text-[11px]">USD ($):</span>
+              <span className="font-bold text-blue-700 dark:text-blue-300">{formatCurrencyUSD(aggregates.revenue.usd)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-slate-500 text-[11px]">CNY (¥):</span>
+              <span className="font-bold text-rose-700 dark:text-rose-300">{formatCurrencyCNY(aggregates.revenue.cny)}</span>
+            </div>
+            {aggregates.revenue.other > 0 && (
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500 text-[11px]">ອື່ນໆ:</span>
+                <span className="font-bold text-purple-700 dark:text-purple-300">{aggregates.revenue.other.toLocaleString()}</span>
+              </div>
+            )}
+          </div>
+          <div className="pt-1.5 border-t border-slate-100 dark:border-slate-700/60 text-[10px] text-slate-400">
+            ລວມມູນຄ່າທັງໝົດຕາມ 4 ສະກຸນເງິນ
+          </div>
         </div>
 
-        {/* Total Paid / Received */}
-        <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-xs space-y-1">
-          <div className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
-            <span>ຮັບຊຳລະແລ້ວ</span>
+        {/* 2. Total Paid / Received (ຮັບຊຳລະແລ້ວ) */}
+        <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-teal-200 dark:border-teal-800/60 shadow-xs space-y-3 flex flex-col justify-between">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700/60 pb-2">
+            <span className="text-xs font-extrabold text-teal-700 dark:text-teal-400">
+              2. ຮັບຊຳລະແລ້ວ
+            </span>
             <CheckCircle2 className="w-4 h-4 text-teal-600" />
           </div>
-          <p className="text-lg font-black text-teal-600 dark:text-teal-400 truncate">
-            {formatCurrencyLAK(aggregates.totalPaid)}
-          </p>
-          <p className="text-[10px] text-slate-400">
-            ຈຳນວນເງິນທີ່ລູກຄ້າຊຳລະແລ້ວ
-          </p>
+          <div className="space-y-1.5 text-xs">
+            <div className="flex justify-between items-center">
+              <span className="text-slate-500 text-[11px]">LAK:</span>
+              <span className="font-bold text-teal-700 dark:text-teal-300">{formatCurrencyLAK(aggregates.paid.lak)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-slate-500 text-[11px]">USD ($):</span>
+              <span className="font-bold text-blue-700 dark:text-blue-300">{formatCurrencyUSD(aggregates.paid.usd)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-slate-500 text-[11px]">CNY (¥):</span>
+              <span className="font-bold text-rose-700 dark:text-rose-300">{formatCurrencyCNY(aggregates.paid.cny)}</span>
+            </div>
+            {aggregates.paid.other > 0 && (
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500 text-[11px]">ອື່ນໆ:</span>
+                <span className="font-bold text-purple-700 dark:text-purple-300">{aggregates.paid.other.toLocaleString()}</span>
+              </div>
+            )}
+          </div>
+          <div className="pt-1.5 border-t border-slate-100 dark:border-slate-700/60 text-[10px] text-slate-400">
+            ຍອດເງິນທີ່ລູກຄ້າຊຳລະເຂົ້າມາແລ້ວ
+          </div>
         </div>
 
-        {/* Total Outstanding */}
-        <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-xs space-y-1">
-          <div className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
-            <span>ລວມຄ້າງຊຳລະ</span>
+        {/* 3. Total Outstanding (ຍອດຄ້າງຊຳລະ) */}
+        <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-amber-200 dark:border-amber-800/60 shadow-xs space-y-3 flex flex-col justify-between">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700/60 pb-2">
+            <span className="text-xs font-extrabold text-amber-700 dark:text-amber-400">
+              3. ຍອດຄ້າງຊຳລະ
+            </span>
             <AlertCircle className="w-4 h-4 text-amber-500" />
           </div>
-          <p className="text-lg font-black text-amber-600 dark:text-amber-400 truncate">
-            {formatCurrencyLAK(aggregates.totalOutstanding)}
-          </p>
-          <p className="text-[10px] text-slate-400">
-            ຈຳນວນເງິນທີ່ຍັງບໍ່ທັນເກັບ
-          </p>
+          <div className="space-y-1.5 text-xs">
+            <div className="flex justify-between items-center">
+              <span className="text-slate-500 text-[11px]">LAK:</span>
+              <span className="font-bold text-amber-700 dark:text-amber-300">{formatCurrencyLAK(aggregates.outstanding.lak)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-slate-500 text-[11px]">USD ($):</span>
+              <span className="font-bold text-orange-700 dark:text-orange-300">{formatCurrencyUSD(aggregates.outstanding.usd)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-slate-500 text-[11px]">CNY (¥):</span>
+              <span className="font-bold text-rose-700 dark:text-rose-300">{formatCurrencyCNY(aggregates.outstanding.cny)}</span>
+            </div>
+            {aggregates.outstanding.other > 0 && (
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500 text-[11px]">ອື່ນໆ:</span>
+                <span className="font-bold text-purple-700 dark:text-purple-300">{aggregates.outstanding.other.toLocaleString()}</span>
+              </div>
+            )}
+          </div>
+          <div className="pt-1.5 border-t border-slate-100 dark:border-slate-700/60 text-[10px] text-slate-400">
+            ຍອດເງິນທີ່ລູກຄ້າຍັງບໍ່ທັນຊຳລະ
+          </div>
         </div>
 
-        {/* Total Expenses */}
-        <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-xs space-y-1">
-          <div className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
-            <span>ລວມລາຍຈ່າຍທັງໝົດ</span>
+        {/* 4. Total Expenses (ລວມລາຍຈ່າຍທັງໝົດ) */}
+        <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-rose-200 dark:border-rose-800/60 shadow-xs space-y-3 flex flex-col justify-between">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700/60 pb-2">
+            <span className="text-xs font-extrabold text-rose-700 dark:text-rose-400">
+              4. ລວມລາຍຈ່າຍທັງໝົດ
+            </span>
             <TrendingDown className="w-4 h-4 text-rose-500" />
           </div>
-          <p className="text-lg font-black text-rose-600 dark:text-rose-400 truncate">
-            {formatCurrencyLAK(aggregates.totalExpenses)}
-          </p>
-          <p className="text-[10px] text-slate-400">
-            ຄ່າຕິດຕັ້ງ + ຄ່າທຳນຽມ + ຄ່າໃບອະນຸຍາດ
-          </p>
+          <div className="space-y-1.5 text-xs">
+            <div className="flex justify-between items-center">
+              <span className="text-slate-500 text-[11px]">LAK:</span>
+              <span className="font-bold text-rose-700 dark:text-rose-300">{formatCurrencyLAK(aggregates.expenses.lak)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-slate-500 text-[11px]">USD ($):</span>
+              <span className="font-bold text-orange-700 dark:text-orange-300">{formatCurrencyUSD(aggregates.expenses.usd)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-slate-500 text-[11px]">CNY (¥):</span>
+              <span className="font-bold text-slate-500 dark:text-slate-400">{formatCurrencyCNY(aggregates.expenses.cny)}</span>
+            </div>
+            {aggregates.expenses.other > 0 && (
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500 text-[11px]">ອື່ນໆ:</span>
+                <span className="font-bold text-purple-700 dark:text-purple-300">{aggregates.expenses.other.toLocaleString()}</span>
+              </div>
+            )}
+          </div>
+          <div className="pt-1.5 border-t border-slate-100 dark:border-slate-700/60 text-[10px] text-slate-400">
+            ລາຍຈ່າຍຄ່າຕິດຕັ້ງ, ທຳນຽມ ແລະ ໃບອະນຸຍາດ
+          </div>
         </div>
 
-        {/* Net Profit */}
-        <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-xs space-y-1">
-          <div className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
-            <span>ກຳໄລ / ລາຍຮັບສຸດທິ</span>
+        {/* 5. Net Profit (ກຳໄລ / ລາຍຮັບສຸດທິ) */}
+        <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-blue-200 dark:border-blue-800/60 shadow-xs space-y-3 flex flex-col justify-between">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700/60 pb-2">
+            <span className="text-xs font-extrabold text-blue-700 dark:text-blue-400">
+              5. ກຳໄລ / ລາຍຮັບສຸດທິ
+            </span>
             <TrendingUp className="w-4 h-4 text-blue-600" />
           </div>
-          <p className={`text-lg font-black truncate ${aggregates.totalNetProfit >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-rose-600 dark:text-rose-400'}`}>
-            {formatCurrencyLAK(aggregates.totalNetProfit)}
-          </p>
-          <p className="text-[10px] text-slate-400">
-            ລາຍຮັບລວມ - ລາຍຈ່າຍລວມ
-          </p>
+          <div className="space-y-1.5 text-xs">
+            <div className="flex justify-between items-center">
+              <span className="text-slate-500 text-[11px]">LAK:</span>
+              <span className={`font-bold ${aggregates.netProfit.lak >= 0 ? 'text-blue-700 dark:text-blue-300' : 'text-rose-600'}`}>
+                {formatCurrencyLAK(aggregates.netProfit.lak)}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-slate-500 text-[11px]">USD ($):</span>
+              <span className={`font-bold ${aggregates.netProfit.usd >= 0 ? 'text-blue-700 dark:text-blue-300' : 'text-rose-600'}`}>
+                {formatCurrencyUSD(aggregates.netProfit.usd)}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-slate-500 text-[11px]">CNY (¥):</span>
+              <span className={`font-bold ${aggregates.netProfit.cny >= 0 ? 'text-rose-700 dark:text-rose-300' : 'text-rose-600'}`}>
+                {formatCurrencyCNY(aggregates.netProfit.cny)}
+              </span>
+            </div>
+            {aggregates.netProfit.other !== 0 && (
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500 text-[11px]">ອື່ນໆ:</span>
+                <span className="font-bold text-purple-700 dark:text-purple-300">{aggregates.netProfit.other.toLocaleString()}</span>
+              </div>
+            )}
+          </div>
+          <div className="pt-1.5 border-t border-slate-100 dark:border-slate-700/60 text-[10px] text-slate-400">
+            ຄິດໄລ່: ລາຍຮັບ - ລາຍຈ່າຍ ແຍກຕາມສະກຸນເງິນ
+          </div>
         </div>
 
       </div>
@@ -688,14 +851,23 @@ export const ConsolidatedAllInOneView: React.FC<Props> = ({
                   </td>
                   
                   {/* Income Totals */}
-                  <td className="px-3 py-3 text-right text-emerald-700 dark:text-emerald-300 bg-emerald-100/60 dark:bg-emerald-950/60">
-                    {formatCurrencyLAK(aggregates.totalRevenue)}
+                  <td className="px-3 py-3 text-right bg-emerald-100/60 dark:bg-emerald-950/60">
+                    <div className="text-emerald-700 dark:text-emerald-300 font-extrabold">{formatCurrencyLAK(aggregates.totalRevenue)}</div>
+                    <div className="text-[10px] text-emerald-800/80 dark:text-emerald-400 font-normal leading-tight mt-0.5">
+                      {formatCurrencyLAK(aggregates.revenue.lak)} + {formatCurrencyUSD(aggregates.revenue.usd)} + {formatCurrencyCNY(aggregates.revenue.cny)}
+                    </div>
                   </td>
-                  <td className="px-3 py-3 text-right text-teal-700 dark:text-teal-300 bg-emerald-100/60 dark:bg-emerald-950/60">
-                    {formatCurrencyLAK(aggregates.totalPaid)}
+                  <td className="px-3 py-3 text-right bg-emerald-100/60 dark:bg-emerald-950/60">
+                    <div className="text-teal-700 dark:text-teal-300 font-extrabold">{formatCurrencyLAK(aggregates.totalPaid)}</div>
+                    <div className="text-[10px] text-teal-800/80 dark:text-teal-400 font-normal leading-tight mt-0.5">
+                      {formatCurrencyLAK(aggregates.paid.lak)} + {formatCurrencyUSD(aggregates.paid.usd)} + {formatCurrencyCNY(aggregates.paid.cny)}
+                    </div>
                   </td>
-                  <td className="px-3 py-3 text-right text-amber-700 dark:text-amber-300 bg-emerald-100/60 dark:bg-emerald-950/60">
-                    {formatCurrencyLAK(aggregates.totalOutstanding)}
+                  <td className="px-3 py-3 text-right bg-emerald-100/60 dark:bg-emerald-950/60">
+                    <div className="text-amber-700 dark:text-amber-300 font-extrabold">{formatCurrencyLAK(aggregates.totalOutstanding)}</div>
+                    <div className="text-[10px] text-amber-800/80 dark:text-amber-400 font-normal leading-tight mt-0.5">
+                      {formatCurrencyLAK(aggregates.outstanding.lak)} + {formatCurrencyUSD(aggregates.outstanding.usd)} + {formatCurrencyCNY(aggregates.outstanding.cny)}
+                    </div>
                   </td>
                   <td className="px-3 py-3 bg-emerald-100/60 dark:bg-emerald-950/60"></td>
 
@@ -712,13 +884,21 @@ export const ConsolidatedAllInOneView: React.FC<Props> = ({
                   <td className="px-3 py-3 text-right text-rose-700 dark:text-rose-300 bg-rose-100/60 dark:bg-rose-950/60">
                     {formatCurrencyLAK(aggregates.totalSupportExp)}
                   </td>
-                  <td className="px-3 py-3 text-right text-rose-800 dark:text-rose-200 bg-rose-200/80 dark:bg-rose-900/80 text-sm">
-                    {formatCurrencyLAK(aggregates.totalExpenses)}
+                  <td className="px-3 py-3 text-right bg-rose-200/80 dark:bg-rose-900/80 text-sm">
+                    <div className="text-rose-800 dark:text-rose-200 font-extrabold">{formatCurrencyLAK(aggregates.totalExpenses)}</div>
+                    <div className="text-[10px] text-rose-900/80 dark:text-rose-300 font-normal leading-tight mt-0.5">
+                      {formatCurrencyLAK(aggregates.expenses.lak)} + {formatCurrencyUSD(aggregates.expenses.usd)}
+                    </div>
                   </td>
 
                   {/* Grand Net Profit */}
-                  <td className={`px-3 py-3 text-right text-sm bg-blue-100/80 dark:bg-blue-950/80 ${aggregates.totalNetProfit >= 0 ? 'text-blue-800 dark:text-blue-300' : 'text-rose-600 dark:text-rose-400'}`}>
-                    {formatCurrencyLAK(aggregates.totalNetProfit)}
+                  <td className={`px-3 py-3 text-right text-sm bg-blue-100/80 dark:bg-blue-950/80`}>
+                    <div className={`font-extrabold ${aggregates.totalNetProfit >= 0 ? 'text-blue-800 dark:text-blue-300' : 'text-rose-600 dark:text-rose-400'}`}>
+                      {formatCurrencyLAK(aggregates.totalNetProfit)}
+                    </div>
+                    <div className="text-[10px] text-blue-900/80 dark:text-blue-300 font-normal leading-tight mt-0.5">
+                      {formatCurrencyLAK(aggregates.netProfit.lak)} + {formatCurrencyUSD(aggregates.netProfit.usd)} + {formatCurrencyCNY(aggregates.netProfit.cny)}
+                    </div>
                   </td>
 
                   <td className="px-3 py-3"></td>
