@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { DollarSign, Clock, Building2, Calendar, AlertTriangle, CheckCircle2, FileCheck, Send, Eye, ShieldCheck, Printer, ArrowUpRight, TrendingUp, RefreshCw, BarChart3, Users, UserCheck, Briefcase } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { DollarSign, Clock, Building2, Calendar, AlertTriangle, CheckCircle2, FileCheck, Send, Eye, ShieldCheck, Printer, ArrowUpRight, TrendingUp, RefreshCw, BarChart3, Users, UserCheck, Briefcase, ListTodo, ArrowLeftRight } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList } from 'recharts';
 import { DocumentRecord, ExchangeRates, TimeframeType } from '../types/document';
 import { convertToTotalLAK, formatCurrencyLAK, formatCurrencyUSD, formatCurrencyCNY } from '../utils/formatters';
@@ -140,6 +140,12 @@ export const DashboardOverview: React.FC<Props> = ({ documents, rates }) => {
   const urgentCompleted = allUrgentDocs.filter((doc) => doc.isCompleted || doc.operationStatus === 'COMPLETED').length;
   const urgentPending = allUrgentDocs.filter((doc) => !(doc.isCompleted || doc.operationStatus === 'COMPLETED')).length;
 
+  // 5.1 Normal Tasks breakdown (Total, Pending, Completed) - Real Time Live
+  const allNormalDocs = documents.filter((doc) => doc.urgency !== 'URGENT');
+  const normalTotal = allNormalDocs.length;
+  const normalCompleted = allNormalDocs.filter((doc) => doc.isCompleted || doc.operationStatus === 'COMPLETED').length;
+  const normalPending = allNormalDocs.filter((doc) => !(doc.isCompleted || doc.operationStatus === 'COMPLETED')).length;
+
   // 6. Total Stamped (Real Time)
   const totalStamped = documents.filter((doc) => doc.isStamped).length;
 
@@ -191,6 +197,121 @@ export const DashboardOverview: React.FC<Props> = ({ documents, rates }) => {
   });
 
   const coordinatorStatsList = Object.values(coordinatorMap).sort((a, b) => b.total - a.total);
+
+  // 12. Pending Workflow Breakdown Metrics
+  const inProgressDocs = documents.filter((doc) => !(doc.isCompleted || doc.operationStatus === 'COMPLETED'));
+  const totalInProgressCount = inProgressDocs.length;
+
+  const pendingWorkflowSteps = [
+    {
+      id: 'stamping',
+      name: 'ຂັ້ນຕອນ ຈ້ຳກາ (Stamping)',
+      stageKey: 'isStamped',
+      icon: FileCheck,
+      badgeColor: 'bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300 border-blue-200 dark:border-blue-800',
+      iconBg: 'bg-blue-100 text-blue-600 dark:bg-blue-950/80 dark:text-blue-400',
+      progressBg: 'bg-blue-500',
+      doneCount: documents.filter((d) => d.isStamped).length,
+      pendingCount: inProgressDocs.filter((d) => !d.isStamped).length,
+      totalUnfinished: documents.filter((d) => !d.isStamped).length,
+      description: 'ເອກະສານທີ່ຍັງບໍ່ທັນໄດ້ຈ້ຳກາປະທັບປະຈຳບໍລິສັດ',
+    },
+    {
+      id: 'assembly',
+      name: 'ຂັ້ນຕອນ ປະກອບ (Assembly)',
+      stageKey: 'isAssembled',
+      icon: Building2,
+      badgeColor: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/80 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800',
+      iconBg: 'bg-indigo-100 text-indigo-600 dark:bg-indigo-950/80 dark:text-indigo-400',
+      progressBg: 'bg-indigo-500',
+      doneCount: documents.filter((d) => d.isAssembled).length,
+      pendingCount: inProgressDocs.filter((d) => !d.isAssembled).length,
+      totalUnfinished: documents.filter((d) => !d.isAssembled).length,
+      description: 'ເອກະສານທີ່ຍັງບໍ່ທັນໄດ້ປະກອບຊຸດສຳນວນເອກະສານ',
+    },
+    {
+      id: 'submission',
+      name: 'ຂັ້ນຕອນ ຍື່ນ (Submission)',
+      stageKey: 'isSubmitted',
+      icon: Send,
+      badgeColor: 'bg-purple-100 text-purple-800 dark:bg-purple-950/80 dark:text-purple-300 border-purple-200 dark:border-purple-800',
+      iconBg: 'bg-purple-100 text-purple-600 dark:bg-purple-950/80 dark:text-purple-400',
+      progressBg: 'bg-purple-500',
+      doneCount: documents.filter((d) => d.isSubmitted).length,
+      pendingCount: inProgressDocs.filter((d) => !d.isSubmitted).length,
+      totalUnfinished: documents.filter((d) => !d.isSubmitted).length,
+      description: 'ເອກະສານທີ່ຍັງບໍ່ທັນໄດ້ຍື່ນເຂົ້າຂະແໜງການສ່ວຍສາອາກອນ',
+    },
+    {
+      id: 'tracking',
+      name: 'ຂັ້ນຕອນ ຕິດຕາມ (Tracking)',
+      stageKey: 'isTracked',
+      icon: Eye,
+      badgeColor: 'bg-sky-100 text-sky-800 dark:bg-sky-950/80 dark:text-sky-300 border-sky-200 dark:border-sky-800',
+      iconBg: 'bg-sky-100 text-sky-600 dark:bg-sky-950/80 dark:text-sky-400',
+      progressBg: 'bg-sky-500',
+      doneCount: documents.filter((d) => d.isTracked).length,
+      pendingCount: inProgressDocs.filter((d) => !d.isTracked).length,
+      totalUnfinished: documents.filter((d) => !d.isTracked).length,
+      description: 'ເອກະສານທີ່ຍັງບໍ່ທັນໄດ້ຕິດຕາມຜົນການດຳເນີນງານ',
+    },
+  ];
+
+  // Scrollbar synchronization for pending breakdown table
+  const topBreakdownScrollRef = useRef<HTMLDivElement>(null);
+  const bottomBreakdownScrollRef = useRef<HTMLDivElement>(null);
+  const breakdownTableRef = useRef<HTMLTableElement>(null);
+  const [breakdownTableWidth, setBreakdownTableWidth] = useState<number>(0);
+
+  useEffect(() => {
+    const updateWidth = () => {
+      if (breakdownTableRef.current) {
+        setBreakdownTableWidth(breakdownTableRef.current.scrollWidth);
+      } else if (bottomBreakdownScrollRef.current) {
+        setBreakdownTableWidth(bottomBreakdownScrollRef.current.scrollWidth);
+      }
+    };
+
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    const observer = new ResizeObserver(updateWidth);
+    if (bottomBreakdownScrollRef.current) {
+      observer.observe(bottomBreakdownScrollRef.current);
+    }
+    if (breakdownTableRef.current) {
+      observer.observe(breakdownTableRef.current);
+    }
+
+    return () => {
+      window.removeEventListener('resize', updateWidth);
+      observer.disconnect();
+    };
+  }, [documents]);
+
+  const isSyncingTopBreakdown = useRef(false);
+  const isSyncingBottomBreakdown = useRef(false);
+
+  const handleTopBreakdownScroll = () => {
+    if (isSyncingTopBreakdown.current) {
+      isSyncingTopBreakdown.current = false;
+      return;
+    }
+    if (topBreakdownScrollRef.current && bottomBreakdownScrollRef.current) {
+      isSyncingBottomBreakdown.current = true;
+      bottomBreakdownScrollRef.current.scrollLeft = topBreakdownScrollRef.current.scrollLeft;
+    }
+  };
+
+  const handleBottomBreakdownScroll = () => {
+    if (isSyncingBottomBreakdown.current) {
+      isSyncingBottomBreakdown.current = false;
+      return;
+    }
+    if (topBreakdownScrollRef.current && bottomBreakdownScrollRef.current) {
+      isSyncingTopBreakdown.current = true;
+      topBreakdownScrollRef.current.scrollLeft = bottomBreakdownScrollRef.current.scrollLeft;
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -643,6 +764,93 @@ export const DashboardOverview: React.FC<Props> = ({ documents, rates }) => {
           </div>
         </div>
 
+        {/* Normal Tasks Detailed Breakdown */}
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-700 pb-3">
+            <div className="flex items-center space-x-2">
+              <div className="p-2 bg-blue-100 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400 rounded-xl">
+                <Briefcase className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center space-x-2">
+                  <h3 className="font-bold text-slate-800 dark:text-slate-100 text-base">
+                    ສະຖິຕິໜ້າວຽກປົກກະຕິ (Normal Tasks)
+                  </h3>
+                  <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-blue-500"></span>
+                    </span>
+                    <span>Real-Time</span>
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400">
+                  ສະແດງຈຳນວນວຽກປົກກະຕິທັງໝົດ, ວຽກປົກກະຕິທີ່ຍັງຄ້າງ (Pending) ແລະ ວຽກປົກກະຕິທີ່ສຳເລັດ (Completed)
+                </p>
+              </div>
+            </div>
+            <span className="px-3 py-1 bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 font-extrabold text-xs rounded-full border border-blue-200 dark:border-blue-800 self-start sm:self-auto">
+              ລວມວຽກປົກກະຕິ: {normalTotal} ບໍລິສັດ
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* 1. Normal Tasks Total */}
+            <div className="p-4 bg-blue-50 dark:bg-blue-950/40 rounded-2xl border border-blue-200/80 dark:border-blue-900/40 relative overflow-hidden group hover:shadow-md transition">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-blue-800 dark:text-blue-300 block">
+                  ວຽກປົກກະຕິ ທັງໝົດ
+                </span>
+                <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-blue-200/80 dark:bg-blue-900/80 text-blue-900 dark:text-blue-200">
+                  100%
+                </span>
+              </div>
+              <div className="text-3xl font-black text-blue-900 dark:text-blue-100 mt-2">
+                {normalTotal} <span className="text-xs font-normal text-blue-600 dark:text-blue-400">ບໍລິສັດ</span>
+              </div>
+              <p className="text-[11px] text-blue-600 dark:text-blue-400 mt-1">
+                ເອກະສານທີ່ເປັນວຽກປົກກະຕິທັງໝົດ
+              </p>
+            </div>
+
+            {/* 2. Normal Tasks Pending */}
+            <div className="p-4 bg-amber-50 dark:bg-amber-950/40 rounded-2xl border border-amber-200/80 dark:border-amber-900/40 relative overflow-hidden group hover:shadow-md transition">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-amber-700 dark:text-amber-300 block">
+                  ປົກກະຕິ ທີ່ຍັງຄ້າງ (Pending)
+                </span>
+                <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-amber-200/80 dark:bg-amber-900/80 text-amber-800 dark:text-amber-200">
+                  {normalTotal > 0 ? Math.round((normalPending / normalTotal) * 100) : 0}%
+                </span>
+              </div>
+              <div className="text-3xl font-black text-amber-800 dark:text-amber-200 mt-2">
+                {normalPending} <span className="text-xs font-normal text-amber-600 dark:text-amber-400">ບໍລິສັດ</span>
+              </div>
+              <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1">
+                ກຳລັງດຳເນີນງານ / ຍັງບໍ່ທັນສຳເລັດ
+              </p>
+            </div>
+
+            {/* 3. Normal Tasks Completed */}
+            <div className="p-4 bg-emerald-50 dark:bg-emerald-950/40 rounded-2xl border border-emerald-200/80 dark:border-emerald-900/40 relative overflow-hidden group hover:shadow-md transition">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-emerald-700 dark:text-emerald-300 block">
+                  ປົກກະຕິ ທີ່ສຳເລັດ (Completed)
+                </span>
+                <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-200/80 dark:bg-emerald-900/80 text-emerald-800 dark:text-emerald-200">
+                  {normalTotal > 0 ? Math.round((normalCompleted / normalTotal) * 100) : 0}%
+                </span>
+              </div>
+              <div className="text-3xl font-black text-emerald-800 dark:text-emerald-200 mt-2">
+                {normalCompleted} <span className="text-xs font-normal text-emerald-600 dark:text-emerald-400">ບໍລິສັດ</span>
+              </div>
+              <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1">
+                ດຳເນີນການສຳເລັດຮຽບຮ້ອຍແລ້ວ
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Workflow Progress Badges Grid */}
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
@@ -757,6 +965,153 @@ export const DashboardOverview: React.FC<Props> = ({ documents, rates }) => {
 
           </div>
         </div>
+
+        {/* Pending Workflow Breakdown Table & Summary Card */}
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-700 pb-3">
+            <div className="flex items-center space-x-2">
+              <div className="p-2 bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 rounded-xl">
+                <ListTodo className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center space-x-2">
+                  <h3 className="font-bold text-slate-800 dark:text-slate-100 text-base">
+                    ສະຫຼຸບຂັ້ນຕອນວຽກທີ່ຍັງຄ້າງ (Pending Workflow Breakdown)
+                  </h3>
+                  <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span>
+                    </span>
+                    <span>Real-Time Live</span>
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400">
+                  ນັບຈຳນວນເອກະສານທີ່ຍັງຢູ່ໃນຂັ້ນຕອນ ຈ້ຳກາ, ປະກອບ, ຍື່ນ ແລະ ຕິດຕາມ ເພື່ອໃຫ້ເຫັນພາບລວມຂອງວຽກທີ່ຍັງບໍ່ທັນສຳເລັດ
+                </p>
+              </div>
+            </div>
+            <span className="px-3 py-1 bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 font-extrabold text-xs rounded-full border border-amber-200 dark:border-amber-800 self-start sm:self-auto">
+              ວຽກດຳເນີນງານທີ່ຍັງຄ້າງ: {totalInProgressCount} ບໍລິສັດ
+            </span>
+          </div>
+
+          {/* Quick Summary Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {pendingWorkflowSteps.map((step) => {
+              const IconComp = step.icon;
+              return (
+                <div key={`summary-${step.id}`} className="bg-slate-50 dark:bg-slate-900/60 p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 block truncate">
+                      {step.name}
+                    </span>
+                    <div className="text-2xl font-black text-slate-900 dark:text-slate-100">
+                      {step.pendingCount} <span className="text-xs font-normal text-slate-500">ຄ້າງ</span>
+                    </div>
+                  </div>
+                  <div className={`p-2 rounded-lg ${step.iconBg} shrink-0`}>
+                    <IconComp className="w-5 h-5" />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Detailed Breakdown Table */}
+          <div className="rounded-xl border border-slate-200/80 dark:border-slate-700 overflow-hidden">
+            {/* Top Scrollbar Bar Header */}
+            <div className="bg-slate-100/90 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-700 px-3 py-1 flex items-center justify-between text-[11px] text-slate-500">
+              <div className="flex items-center space-x-1.5 font-bold text-slate-700 dark:text-slate-300">
+                <ArrowLeftRight className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                <span>ແຖບເລື່ອນຕາຕະລາງຢູ່ຫົວແຖວ (Top Scrollbar)</span>
+              </div>
+              <span className="text-[10px] text-slate-400 hidden sm:inline">
+                ເລື່ອນຕາຕະລາງຊ້າຍ-ຂວາ ຢູ່ຫົວແຖວໄດ້ທັນທີ
+              </span>
+            </div>
+
+            {/* Top Horizontal Scrollbar Track */}
+            <div
+              ref={topBreakdownScrollRef}
+              onScroll={handleTopBreakdownScroll}
+              className="overflow-x-auto overflow-y-hidden bg-slate-50/90 dark:bg-slate-900/80 border-b border-slate-200/80 dark:border-slate-700/80"
+              style={{ height: '16px' }}
+            >
+              <div style={{ width: `${breakdownTableWidth}px`, height: '1px' }} />
+            </div>
+
+            <div
+              ref={bottomBreakdownScrollRef}
+              onScroll={handleBottomBreakdownScroll}
+              className="overflow-x-auto"
+            >
+              <table ref={breakdownTableRef} className="w-full text-left text-xs text-slate-700 dark:text-slate-300">
+              <thead className="bg-slate-50 dark:bg-slate-900/60 text-slate-500 dark:text-slate-400 uppercase text-[11px] font-bold border-b border-slate-200 dark:border-slate-700">
+                <tr>
+                  <th className="py-3 px-4">ຂັ້ນຕອນວຽກ (Workflow Step)</th>
+                  <th className="py-3 px-3">ລາຍລະອຽດວຽກງານ</th>
+                  <th className="py-3 px-3 text-center">ສຳເລັດແລ້ວ</th>
+                  <th className="py-3 px-3 text-center">ຍັງຄ້າງ (ກຳລັງດຳເນີນ)</th>
+                  <th className="py-3 px-3 text-center">ຍັງບໍ່ໄດ້ດຳເນີນທັງໝົດ</th>
+                  <th className="py-3 px-4">ອັດຕາວຽກທີ່ຍັງຄ້າງ (% Pending)</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60">
+                {pendingWorkflowSteps.map((step) => {
+                  const IconComp = step.icon;
+                  const totalDocs = documents.length;
+                  const unfinishedRatio = totalDocs > 0 ? Math.round((step.totalUnfinished / totalDocs) * 100) : 0;
+
+                  return (
+                    <tr key={`row-${step.id}`} className="hover:bg-slate-50/80 dark:hover:bg-slate-700/40 transition">
+                      <td className="py-3 px-4 font-bold text-slate-900 dark:text-slate-100">
+                        <div className="flex items-center space-x-2.5">
+                          <div className={`p-2 rounded-lg ${step.iconBg} shrink-0`}>
+                            <IconComp className="w-4 h-4" />
+                          </div>
+                          <span>{step.name}</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-3 text-slate-500 dark:text-slate-400 text-[11px]">
+                        {step.description}
+                      </td>
+                      <td className="py-3 px-3 text-center">
+                        <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 font-bold rounded-full text-xs">
+                          {step.doneCount}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 text-center">
+                        <span className="px-2.5 py-1 bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 font-bold rounded-full text-xs">
+                          {step.pendingCount}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 text-center">
+                        <span className="px-2.5 py-1 bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200 font-bold rounded-full text-xs">
+                          {step.totalUnfinished}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 min-w-[150px]">
+                        <div className="flex items-center space-x-2">
+                          <div className="flex-1 bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full transition-all duration-500 rounded-full ${step.progressBg}`}
+                              style={{ width: `${unfinishedRatio}%` }}
+                            />
+                          </div>
+                          <span className="text-xs font-bold text-slate-700 dark:text-slate-300 w-10 text-right">
+                            {unfinishedRatio}%
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
 
         {/* Coordinator Statistics Breakdown Card */}
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm space-y-4">

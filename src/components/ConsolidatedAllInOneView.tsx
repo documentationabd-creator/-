@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Table as TableIcon,
   DollarSign,
@@ -16,7 +16,8 @@ import {
   Layers,
   ShieldCheck,
   AlertCircle,
-  HelpCircle
+  HelpCircle,
+  ArrowLeftRight
 } from 'lucide-react';
 import { DocumentRecord, ExchangeRates, UrgencyType, OperationStatusType, PaymentStatusType } from '../types/document';
 import {
@@ -52,6 +53,62 @@ export const ConsolidatedAllInOneView: React.FC<Props> = ({
   const [companyTypeFilter, setCompanyTypeFilter] = useState<string>('ALL');
   const [stepFilter, setStepFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
+
+  // Scrollbar synchronization refs & state
+  const topScrollRef = useRef<HTMLDivElement>(null);
+  const bottomScrollRef = useRef<HTMLDivElement>(null);
+  const masterTableRef = useRef<HTMLTableElement>(null);
+  const [masterTableWidth, setMasterTableWidth] = useState<number>(0);
+
+  useEffect(() => {
+    const updateWidth = () => {
+      if (masterTableRef.current) {
+        setMasterTableWidth(masterTableRef.current.scrollWidth);
+      } else if (bottomScrollRef.current) {
+        setMasterTableWidth(bottomScrollRef.current.scrollWidth);
+      }
+    };
+
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    const observer = new ResizeObserver(updateWidth);
+    if (bottomScrollRef.current) {
+      observer.observe(bottomScrollRef.current);
+    }
+    if (masterTableRef.current) {
+      observer.observe(masterTableRef.current);
+    }
+
+    return () => {
+      window.removeEventListener('resize', updateWidth);
+      observer.disconnect();
+    };
+  }, [documents]);
+
+  const isSyncingTop = useRef(false);
+  const isSyncingBottom = useRef(false);
+
+  const handleTopScroll = () => {
+    if (isSyncingTop.current) {
+      isSyncingTop.current = false;
+      return;
+    }
+    if (topScrollRef.current && bottomScrollRef.current) {
+      isSyncingBottom.current = true;
+      bottomScrollRef.current.scrollLeft = topScrollRef.current.scrollLeft;
+    }
+  };
+
+  const handleBottomScroll = () => {
+    if (isSyncingBottom.current) {
+      isSyncingBottom.current = false;
+      return;
+    }
+    if (topScrollRef.current && bottomScrollRef.current) {
+      isSyncingTop.current = true;
+      topScrollRef.current.scrollLeft = bottomScrollRef.current.scrollLeft;
+    }
+  };
 
   // Extract unique lines for filter dropdown
   const uniqueLines = useMemo(() => {
@@ -596,8 +653,33 @@ export const ConsolidatedAllInOneView: React.FC<Props> = ({
       {/* Main Single Consolidated Master Table Container */}
       <div id="consolidated-master-table-container" className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-xs overflow-hidden">
         
-        <div className="overflow-x-auto max-w-full">
-          <table className="w-full text-left border-collapse text-xs">
+        {/* Top Scrollbar Bar Header */}
+        <div className="bg-slate-100/90 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-700 px-3.5 py-1.5 flex items-center justify-between text-[11px] text-slate-500">
+          <div className="flex items-center space-x-1.5 font-bold text-slate-700 dark:text-slate-300">
+            <ArrowLeftRight className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+            <span>ແຖບເລື່ອນຕາຕະລາງຢູ່ຫົວແຖວ (Top Scrollbar)</span>
+          </div>
+          <span className="text-[10px] text-slate-400 hidden sm:inline">
+            ເລື່ອນຕາຕະລາງຊ້າຍ-ຂວາ ຢູ່ຫົວແຖວໄດ້ທັນທີ
+          </span>
+        </div>
+
+        {/* Top Horizontal Scrollbar Track */}
+        <div
+          ref={topScrollRef}
+          onScroll={handleTopScroll}
+          className="overflow-x-auto overflow-y-hidden bg-slate-50/90 dark:bg-slate-900/80 border-b border-slate-200/80 dark:border-slate-700/80"
+          style={{ height: '16px' }}
+        >
+          <div style={{ width: `${masterTableWidth}px`, height: '1px' }} />
+        </div>
+
+        <div
+          ref={bottomScrollRef}
+          onScroll={handleBottomScroll}
+          className="overflow-x-auto max-w-full"
+        >
+          <table ref={masterTableRef} className="w-full text-left border-collapse text-xs">
             
             {/* Table Header Row Groups */}
             <thead>
